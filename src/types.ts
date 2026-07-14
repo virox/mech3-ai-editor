@@ -17,3 +17,4 @@ export const GROUPS: Record<string, { title: string; description: string; labels
 };
 export const VLIST = ['Close / Open','Ammo enabled','Ammo','Fired on','Health enabled','Health','Heat enabled','Heat','Enters','Region','Target LOS enabled','LOS Range','Target Distance enabled','Target Distance','Active','Valve','Exits'];
 export const STRATEGIES = ['Direct','Zig Zag','Circle','Jump','Random Move'];
+export const CHASSIS = ['notmech','annihilator','avatar','blackhawk','bushwacker','cauldron','champion','daishi','elemental','firefly','madcat','orion','owens','puma','shadowcat','strider','sunder','supernova','thor','vulture'];
