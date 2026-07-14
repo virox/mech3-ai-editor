@@ -19,3 +19,12 @@ export const GROUPS: Record<string, { title: string; description: string; labels
 export const VLIST = ['Valve state to set','Condition: ammo enabled','Ammo threshold','Condition: fired upon','Condition: health enabled','Health threshold','Condition: heat enabled','Heat threshold','Condition: enters region','Region name','Condition: target LOS enabled','Target-LOS range','Condition: target distance enabled','Target-distance threshold','Condition active','Valve to set','Condition: exits region'];
 export const STRATEGIES = ['Direct','Zig Zag','Circle','Jump','Random Move'];
 export const CHASSIS = ['notmech','annihilator','avatar','blackhawk','bushwacker','cauldron','champion','daishi','elemental','firefly','madcat','orion','owens','puma','shadowcat','strider','sunder','supernova','thor','vulture'];
+
+export interface MissionSummary { path:string; relativePath:string; campaign:string; name:string; kind:string; vehicleCount:number; hasValves:boolean; networkCount:number; regionCount:number; }
+export interface LibrarySnapshot { rootPath:string; missions:MissionSummary[]; warnings:string[]; }
+export interface WorkspaceArchive { id:string; path:string; relativePath:string; layer:string; locked:boolean; }
+export interface WorkspaceDocument { id:string; archiveId:string; entryName:string; kind:'aiv'|'valves'|'network'|'region'|'targets'|'objectives'|'raw'; layer:string; root:Json; }
+export interface ReferenceOccurrence { name:string; role:string; documentId:string; location:string; layer:string; targetKind:string; }
+export interface Diagnostic { severity:'info'|'warning'|'error'; code:string; message:string; documentId?:string; location?:string; }
+export interface WorkspaceSnapshot { sessionId:number; rootPath:string; selectedMission:string; archives:WorkspaceArchive[]; documents:WorkspaceDocument[]; references:ReferenceOccurrence[]; diagnostics:Diagnostic[]; }
+export interface ExportResult { files:string[]; changedDocuments:number; }

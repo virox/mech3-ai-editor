@@ -4,7 +4,10 @@ use mech3ax_archive::{read_archive,write_archive,Mode,Version};
 use mech3ax_common::io_ext::{CountingReader,CountingWriter};
 use mech3ax_reader::{read_reader,write_reader};
 use serde_json::Value;
-use std::{fs::File,io::{BufReader,BufWriter,Cursor},path::Path};
+use std::{collections::HashMap,fs::{self,File},io::{BufReader,BufWriter,Cursor},path::{Path,PathBuf}};
+
+#[derive(Clone)] pub struct StoredEntry { pub name:String,pub data:Vec<u8>,pub root:Option<Value> }
+#[derive(Clone)] pub struct StoredArchive { pub path:PathBuf,pub version:Version,pub manifest:Vec<ArchiveEntry>,pub entries:Vec<StoredEntry> }
 
 #[derive(Clone)] pub enum Container { Json, Zrd, Zbd{version:Version,manifest:Vec<ArchiveEntry>,entries:Vec<(String,Vec<u8>,usize)>,aiv_index:usize} }
 impl Container { pub fn kind(&self)->&'static str{match self{Self::Json=>"json",Self::Zrd=>"zrd",Self::Zbd{..}=>"zbd"}} pub fn entry_name(&self)->Option<String>{match self{Self::Zbd{entries,aiv_index,..}=>Some(entries[*aiv_index].0.clone()),_=>None}} }
@@ -26,6 +29,28 @@ pub fn save(path:&Path,root:&Value,container:&Container)->Result<()> {match cont
  Container::Zrd=>{let mut w=CountingWriter::new(BufWriter::new(File::create(path)?),0);write_reader(&mut w,root).map_err(|e|anyhow::anyhow!(e))},
  Container::Zbd{version,manifest,entries,aiv_index}=>{let mut output=CountingWriter::new(BufWriter::new(File::create(path)?),0);let result:Result<()>=write_archive(&mut output,manifest,|name,offset| -> Result<Vec<u8>> {let idx=entries.iter().position(|(n,_,_)|n==name).context("missing archive entry")?;if idx==*aiv_index{let mut w=CountingWriter::new(Vec::new(),offset);write_reader(&mut w,root).map_err(|e|anyhow::anyhow!(e))?;Ok(w.into_inner())}else{Ok(entries[idx].1.clone())}},*version);result}
 }}
+
+pub fn load_archive(path:&Path)->Result<StoredArchive>{
+ let bytes=fs::read(path).with_context(||format!("could not read {}",path.display()))?;let mut last=None;
+ for version in [Version::One,Version::Two(Mode::Reader)]{
+  let mut raw=Vec::new();let mut r=CountingReader::new(Cursor::new(&bytes));
+  let result:Result<Vec<ArchiveEntry>>=read_archive(&mut r,|name,data,offset|->Result<()>{raw.push((name.to_owned(),data,offset));Ok(())},version);
+  match result{Ok(manifest)=>{let entries=raw.into_iter().map(|(name,data,offset)|{let root=if name.to_ascii_lowercase().ends_with(".zrd"){parse_zrd(data.clone(),offset).ok()}else{None};StoredEntry{name,data,root}}).collect();return Ok(StoredArchive{path:path.to_owned(),version,manifest,entries})},Err(e)=>last=Some(e)}
+ }
+ Err(last.unwrap_or_else(||anyhow::anyhow!("unsupported archive")))
+}
+
+pub fn write_archive_with_roots(path:&Path,archive:&StoredArchive,roots:&HashMap<String,Value>)->Result<()>{
+ if let Some(parent)=path.parent(){fs::create_dir_all(parent)?}
+ let temp=path.with_extension(format!("{}.tmp",path.extension().and_then(|x|x.to_str()).unwrap_or("zbd")));
+ let mut output=CountingWriter::new(BufWriter::new(File::create(&temp)?),0);
+ let result:Result<()>=write_archive(&mut output,&archive.manifest,|name,offset|->Result<Vec<u8>>{
+  let entry=archive.entries.iter().find(|e|e.name==name).with_context(||format!("missing archive entry {name}"))?;
+  if let Some(root)=roots.get(name){let mut w=CountingWriter::new(Vec::new(),offset);write_reader(&mut w,root).map_err(|e|anyhow::anyhow!(e))?;Ok(w.into_inner())}else{Ok(entry.data.clone())}
+ },archive.version);
+ result?;drop(output);
+ if path.exists(){fs::remove_file(path)?}fs::rename(&temp,path)?;Ok(())
+}
 
 #[cfg(test)] mod tests {
  use super::*;

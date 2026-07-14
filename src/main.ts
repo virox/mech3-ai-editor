@@ -1,4 +1,6 @@
 import { mount } from 'svelte';
-import App from './App.svelte';
+import Studio from './Studio.svelte';
 import './app.css';
-mount(App, { target: document.getElementById('app')! });
+import './studio.css';
+import './studio-extra.css';
+mount(Studio, { target: document.getElementById('app')! });

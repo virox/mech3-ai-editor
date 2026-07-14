@@ -1,0 +1,25 @@
+<script lang="ts">
+  import type { Json, WorkspaceSnapshot } from '../types';
+  import { documentTitle, documentsOf, layerLabel } from '../workspace';
+  let { workspace, onChanged }: {workspace:WorkspaceSnapshot;onChanged:()=>void}=$props();let search=$state('');let selected=$state('');let rawDocument=$state('');let renameValue=$state('');let renameMessage=$state('');
+  function channels(){const grouped=new Map<string,typeof workspace.references>();for(const ref of workspace.references){if(ref.targetKind!=='valve')continue;const key=ref.name;const list=grouped.get(key)??[];list.push(ref);grouped.set(key,list)}return [...grouped.entries()].filter(([name])=>name.toLowerCase().includes(search.toLowerCase())).sort(([a],[b])=>a.localeCompare(b))}
+  function selectedRefs(){return workspace.references.filter(r=>r.name===selected)}
+  function sourceName(id:string){const doc=workspace.documents.find(d=>d.id===id);return doc?`${documentTitle(doc)} · ${layerLabel(doc.layer)}`:id}
+  function rawDocs(){return documentsOf(workspace,['targets','objectives'])}
+  function selectChannel(name:string){selected=name;renameValue=name;renameMessage=''}
+  function lockedSources(){const archiveIds=new Set(selectedRefs().map(ref=>workspace.documents.find(d=>d.id===ref.documentId)?.archiveId).filter(Boolean));return workspace.archives.filter(a=>archiveIds.has(a.id)&&a.locked)}
+  function replaceExact(value:Json,from:string,to:string):number{if(Array.isArray(value)){let count=0;for(let i=0;i<value.length;i++){if(value[i]===from){value[i]=to;count++}else count+=replaceExact(value[i],from,to)}return count}if(value!==null&&typeof value==='object'){let count=0;for(const child of Object.values(value))count+=replaceExact(child,from,to);return count}return 0}
+  function renameChannel(){const target=renameValue.trim();if(!selected||!target||target===selected)return;const locked=lockedSources();if(locked.length){renameMessage=`Unlock ${locked.map(a=>a.relativePath).join(', ')} before renaming this cross-layer symbol.`;return}if(workspace.references.some(r=>r.targetKind==='valve'&&r.name===target)){renameMessage=`${target} already exists; merging channels requires an explicit data review.`;return}const documentIds=new Set(selectedRefs().map(ref=>ref.documentId));let changed=0;for(const doc of workspace.documents.filter(d=>documentIds.has(d.id)))changed+=replaceExact(doc.root,selected,target);const previous=selected;selected=target;renameMessage=`Renamed ${changed} exact serialized occurrence(s) of ${previous}.`;onChanged()}
+</script>
+
+<div class="reference-page">
+  <section class="reference-main">
+    <div class="page-heading"><div><small>GLOBAL STATE INDEX</small><h2>Valve & Reader References</h2><p>A channel may be created without a `valves.zrd` action. Roles describe actual producers and consumers instead of treating missing action definitions as errors.</p></div><input class="search" placeholder="Filter channels…" bind:value={search}></div>
+    <div class="channel-grid">{#each channels() as [name,refs]}<button class:selected={selected===name} onclick={()=>selectChannel(name)}><div><b>{name}</b><small>{refs.length} occurrence{refs.length===1?'':'s'}</small></div><div class="role-strip">{#each [...new Set(refs.map(r=>r.role))].slice(0,3) as role}<span>{role}</span>{/each}</div></button>{/each}</div>
+  </section>
+  <aside class="reference-detail">
+    {#if selected}<div class="property-title"><div><small>STATE CHANNEL</small><h3>{selected}</h3></div></div><div class="symbol-rename"><input aria-label="New Valve channel name" bind:value={renameValue}><button disabled={!renameValue.trim()||renameValue.trim()===selected||lockedSources().length>0} onclick={renameChannel}>Rename everywhere</button></div>{#if lockedSources().length}<p class="rename-note">Cross-layer rename is locked by {lockedSources().map(a=>a.relativePath).join(', ')}.</p>{/if}{#if renameMessage}<p class="rename-note">{renameMessage}</p>{/if}<div class="occurrences">{#each selectedRefs() as ref}<div><b>{ref.role}</b><span>{sourceName(ref.documentId)}</span><code>{ref.location}</code></div>{/each}</div>{:else}<div class="empty">Select a Valve/state channel to inspect every loaded occurrence.</div>{/if}
+    <div class="property-section"><h4>Diagnostics</h4>{#each workspace.diagnostics as diagnostic}<div class:warning={diagnostic.severity==='warning'} class:error={diagnostic.severity==='error'} class="diagnostic"><b>{diagnostic.code}</b><span>{diagnostic.message}</span>{#if diagnostic.location}<code>{diagnostic.location}</code>{/if}</div>{/each}{#if !workspace.diagnostics.length}<p>No structural or reference diagnostics.</p>{/if}</div>
+    <div class="property-section"><h4>Targets & Objectives</h4><select bind:value={rawDocument}><option value="">Select read-only document…</option>{#each rawDocs() as doc}<option value={doc.id}>{doc.entryName} · {layerLabel(doc.layer)}</option>{/each}</select>{#if rawDocument}{@const doc=workspace.documents.find(d=>d.id===rawDocument)}{#if doc}<pre class="small-raw">{JSON.stringify(doc.root,null,2)}</pre>{/if}{/if}</div>
+  </aside>
+</div>

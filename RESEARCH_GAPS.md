@@ -52,16 +52,16 @@ The following labels remain deliberately unresolved:
 
 | Resource | Tool/dialog | Likely Reader scope | Current editor status |
 |---:|---|---|---|
-| 165–176, 183 | Mech AI and conditional panels | `aiv.zrd`, VList | partially rebuilt |
-| 139 | `AI Network Editor` | network selection | missing |
-| 140 | `Net Edit` | `net_*.zrd` header and radii/dwell values | missing |
-| 141 | `Node Edit - Vehicle` | `net_*.zrd` node position, links, team/type | missing |
+| 165–176, 183 | Mech AI and conditional panels | `aiv.zrd`, VList | rebuilt where field wiring is proven; unknowns retain source indices |
+| 139 | `AI Network Editor` | network selection | functional replacement implemented from serialized structure |
+| 140 | `Net Edit` | `net_*.zrd` header and radii/dwell values | generic serialized tags editable; historical control mapping still unproven |
+| 141 | `Node Edit - Vehicle` | `net_*.zrd` node position, links, team/type | positions/links implemented; additional historical DDX semantics withheld |
 | 142 | `Map Area Editor` | objective/map-area connection | missing; link unproven |
-| 143 | `Vehicle Select` | vehicle reference picker | missing |
+| 143 | `Vehicle Select` | vehicle reference picker | replaced by indexed vehicle-reference controls where known |
 | 152 | untitled NetID/Nodes/Position dialog | network/node inspection | missing; code link required |
 | 154 | untitled Net/Node/From/To dialog | link or relocation operation | missing; code link required |
-| 180 | `Node Parameters` | generic node extension shell | missing; empty resource |
-| 181 | `Ai Network Editor` | alternate/open-file editor shell | missing; code link required |
+| 180 | `Node Parameters` | generic node extension shell | optional serialized tags editable; resource itself remains empty |
+| 181 | `Ai Network Editor` | alternate/open-file editor shell | functional replacement implemented; exact historical shell link unproven |
 | 182 | `Mech Animation Transitions` | animation transition data | outside initial AI scope |
 
 ### Confirmed wiring in `Node Edit - Vehicle`

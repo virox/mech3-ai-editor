@@ -1695,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "mech3-ai-editor"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "mech3ax-api-types",

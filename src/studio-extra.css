@@ -1,0 +1,57 @@
+.field-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.inline-danger {
+  margin-left: auto;
+  padding: 2px 5px;
+  color: #db897d;
+  font-size: 9px;
+}
+
+.inline-editor {
+  display: flex;
+  gap: 6px;
+}
+
+.inline-editor input {
+  min-width: 0;
+}
+
+.inline-editor button {
+  flex: none;
+}
+
+.field-error {
+  color: #e29587;
+}
+
+.symbol-rename {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.symbol-rename input {
+  min-width: 0;
+}
+
+.symbol-rename button {
+  flex: none;
+}
+
+.rename-note {
+  color: #c89576;
+  font-size: 10px;
+}
+
+.last-root {
+  display: block;
+  max-width: 620px;
+  margin-top: 14px;
+  overflow: hidden;
+  color: #72868d;
+  text-overflow: ellipsis;
+}

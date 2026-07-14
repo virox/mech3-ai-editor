@@ -1,6 +1,6 @@
 [package]
 name = "mech3-ai-editor"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [lib]
@@ -20,4 +20,3 @@ mech3ax-reader = { path = "C:/Dev/TerranMechworks/mech3ax/crates/reader" }
 mech3ax-common = { path = "C:/Dev/TerranMechworks/mech3ax/crates/common" }
 mech3ax-archive = { path = "C:/Dev/TerranMechworks/mech3ax/crates/archive" }
 mech3ax-api-types = { path = "C:/Dev/TerranMechworks/mech3ax/crates/api-types" }
-
