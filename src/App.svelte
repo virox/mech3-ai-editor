@@ -2,7 +2,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import type { DocumentSnapshot, Json, Vehicle } from './types';
-  import { GROUPS, VLIST } from './types';
+  import { GROUPS, STRATEGIES, VLIST } from './types';
 
   let doc: DocumentSnapshot | null = null;
   let selected = 0; let tab = 'Vehicle'; let busy = false; let message = 'Open an aiv.zrd, JSON export, or Reader ZBD archive.';
@@ -53,5 +53,10 @@
 </main>
 
 {#snippet Group(v:Vehicle,key:string,labels:string[])}
-  {@const value=getTag(v,key)}<div class="card"><div class="title-row"><div><h2>{key}</h2><p>{labels.length} recovered fields</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={(e)=>e.currentTarget.checked?ensureTag(v,key,labels.length):removeTag(v,key)}> Present</label></div>{#if value}<div class="grid">{#each labels as label,i}<label>{label}<input value={scalar(value[i])} oninput={(e)=>setField(value,i,e.currentTarget.value)}></label>{/each}</div>{:else}<div class="empty">Optional group is not present in this record.</div>{/if}</div>
+  {@const value=getTag(v,key)}<div class="card"><div class="title-row"><div><h2>{key}</h2><p>{labels.length} recovered fields</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={(e)=>e.currentTarget.checked?ensureTag(v,key,labels.length):removeTag(v,key)}> Present</label></div>{#if value}<div class="grid">{#each labels as label,i}<label>{label}{#if key==='p2' && i===0}<select value={scalar(value[i])} onchange={(e)=>setField(value,i,e.currentTarget.value)}>{#each STRATEGIES as strategy,si}<option value={si}>{si} — {strategy}</option>{/each}</select>{:else}<input value={scalar(value[i])} oninput={(e)=>setField(value,i,e.currentTarget.value)}>{/if}</label>{/each}</div>{:else}<div class="empty">Optional group is not present in this record.</div>{/if}</div>
 {/snippet}
+
+<style>
+  select { width:100%; color:#e9eff1; background:#0c1316; border:1px solid #34444b; border-radius:5px; padding:8px 9px; outline:none }
+  select:focus { border-color:#d96134; box-shadow:0 0 0 2px #d9613428 }
+</style>
