@@ -36,7 +36,7 @@
     <div class="page">
     {#if tab==='Vehicle'}
       <div class="card"><h2>Vehicle</h2><div class="grid"><label class="wide">Name<input bind:value={v.name} oninput={()=>doc={...doc!}}></label><label>Net ID<input value={scalar(v.record[0])} oninput={(e)=>setBase(v,0,e.currentTarget.value)}></label><label>Yaw<input value={scalar(v.record[2])} oninput={(e)=>setBase(v,2,e.currentTarget.value)}></label><label>Team / allegiance<input value={scalar(v.record[3])} oninput={(e)=>setBase(v,3,e.currentTarget.value)}></label>{#each ['X','Y','Z'] as axis,i}<label>Position {axis}<input value={scalar(arr(v.record[1])[i])} oninput={(e)=>{const p=arr(v.record[1]);while(p.length<3)p.push(0);p[i]=parse(e.currentTarget.value,p[i]);v.record[1]=p;doc={...doc!}}}></label>{/each}</div></div>
-      {@render Group(v,'p12',GROUPS.p12.labels)}
+      {@render Group(v,'p12',GROUPS.p12.title,GROUPS.p12.description,GROUPS.p12.labels)}
       <div class="card"><h2>Identity</h2>{#each ['pilot','skin'] as key}<label>{key[0].toUpperCase()+key.slice(1)}<input value={scalar(getTag(v,key)?.[0] ?? tags(v).find(x=>x.tag===key)?.value ?? '')} oninput={(e)=>{const t=tags(v).find(x=>x.tag===key);if(t)v.record[t.at+1]=e.currentTarget.value;else v.record.push(key,e.currentTarget.value);doc={...doc!}}}></label>{/each}</div>
     {:else if tab==='Valves'}
       <div class="card"><div class="title-row"><div><h2>Conditional valve list</h2><p>All 17 recovered VList fields. Event and valve names are checked against linked files when available.</p></div><button onclick={()=>addVlist(v)}>Add condition</button></div>
@@ -46,14 +46,14 @@
     {:else if tab==='Raw'}
       <div class="card"><h2>Raw vehicle record</h2><p>Read-only. Unknown tags are retained during Save As.</p><pre>{JSON.stringify(v.record,null,2)}</pre></div>
     {:else}
-      {#each Object.entries(GROUPS).filter(([,g])=>g.tab===tab) as [key,g]}{@render Group(v,key,g.labels)}{/each}
+      {#each Object.entries(GROUPS).filter(([,g])=>g.tab===tab) as [key,g]}{@render Group(v,key,g.title,g.description,g.labels)}{/each}
     {/if}</div>
   {:else}<div class="welcome"><div class="mark large">M3</div><h2>Open AI data to begin</h2><p>Direct `.zrd`, extracted `.json`, and Reader `.zbd` archives are supported.</p><button class="primary" onclick={load}>Choose file…</button></div>{/if}
   </section>
 </main>
 
-{#snippet Group(v:Vehicle,key:string,labels:string[])}
-  {@const value=getTag(v,key)}<div class="card"><div class="title-row"><div><h2>{key}</h2><p>{labels.length} recovered fields</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={(e)=>e.currentTarget.checked?ensureTag(v,key,labels.length):removeTag(v,key)}> Present</label></div>{#if value}<div class="grid">{#each labels as label,i}<label>{label}{#if key==='p2' && i===0}<select value={scalar(value[i])} onchange={(e)=>setField(value,i,e.currentTarget.value)}>{#each STRATEGIES as strategy,si}<option value={si}>{si} — {strategy}</option>{/each}</select>{:else}<input value={scalar(value[i])} oninput={(e)=>setField(value,i,e.currentTarget.value)}>{/if}</label>{/each}</div>{:else}<div class="empty">Optional group is not present in this record.</div>{/if}</div>
+{#snippet Group(v:Vehicle,key:string,title:string,description:string,labels:string[])}
+  {@const value=getTag(v,key)}<div class="card"><div class="title-row"><div><h2>{title}</h2><p>{description}</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={(e)=>e.currentTarget.checked?ensureTag(v,key,labels.length):removeTag(v,key)}> Present</label></div>{#if value}<div class="grid">{#each labels as label,i}<label>{label}{#if key==='p2' && i===0}<select value={scalar(value[i])} onchange={(e)=>setField(value,i,e.currentTarget.value)}>{#each STRATEGIES as strategy,si}<option value={si}>{si} — {strategy}</option>{/each}</select>{:else}<input value={scalar(value[i])} oninput={(e)=>setField(value,i,e.currentTarget.value)}>{/if}</label>{/each}</div>{:else}<div class="empty">This optional section is not present for this vehicle.</div>{/if}</div>
 {/snippet}
 
 <style>
