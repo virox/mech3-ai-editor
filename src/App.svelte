@@ -53,7 +53,7 @@
 </main>
 
 {#snippet Group(v:Vehicle,key:string,title:string,description:string,labels:string[])}
-  {@const value=getTag(v,key)}<div class="card"><div class="title-row"><div><h2>{title}</h2><p>{description}</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={(e)=>e.currentTarget.checked?ensureTag(v,key,labels.length):removeTag(v,key)}> Present</label></div>{#if value}<div class="grid">{#each labels as label,i}<label>{label}{#if key==='p2' && i===0}<select value={scalar(value[i])} onchange={(e)=>setField(value,i,e.currentTarget.value)}>{#each STRATEGIES as strategy,si}<option value={si}>{si} — {strategy}</option>{/each}</select>{:else}<input value={scalar(value[i])} oninput={(e)=>setField(value,i,e.currentTarget.value)}>{/if}</label>{/each}</div>{:else}<div class="empty">This optional section is not present for this vehicle.</div>{/if}</div>
+  {@const value=getTag(v,key)}<div class="card"><div class="title-row"><div><h2>{title}</h2><p>{description}</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={(e)=>e.currentTarget.checked?ensureTag(v,key,labels.length):removeTag(v,key)}> Present</label></div>{#if value}<div class="grid">{#each labels as label,i}<label>{label}{#if key==='p2' && i===0}<select value={scalar(value[i])} onchange={(e)=>setField(value,i,e.currentTarget.value)}>{#each STRATEGIES as strategy,si}<option value={String(si)}>{si} — {strategy}</option>{/each}</select>{:else}<input value={scalar(value[i])} oninput={(e)=>setField(value,i,e.currentTarget.value)}>{/if}</label>{/each}</div>{:else}<div class="empty">This optional section is not present for this vehicle.</div>{/if}</div>
 {/snippet}
 
 <style>
