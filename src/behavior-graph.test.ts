@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeIsActive,nodeOutputLine,portOffsetY,portsCompatible,translatePositions,visibleIds} from './behavior-graph';
+import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeCardRows,nodeIsActive,nodeOutputLine,portOffsetY,portsCompatible,translatePositions,visibleIds,wrapCardLine} from './behavior-graph';
 import type {Json,ValveGraphHost,ValveGraphSnapshot} from './types';
 
 const graph:ValveGraphSnapshot={scopeKey:'m4',nodes:[
@@ -31,6 +31,15 @@ describe('behavior graph helpers',()=>{
     expect(row([1,0,.25,0,0,.999,0,.8,1,'reg_firefly_retreat',0,0,0,60,1,'firefly_retreat',0])).toEqual(['Inside reg_firefly_retreat']);
     expect(row([1,0,.25,0,0,.999,0,.8,1,0,0,0,0,60,1,'firefly_02_go',0])).toEqual(['Never fires: region selector without region']);
     expect(row([1,0,.25,0,0,.999,0,.8,0,'reg_x',0,0,0,60,1,'x',0])).toEqual(['Never fires: no trigger or region']);
+  });
+  it('wraps long card lines instead of cutting them off',()=>{
+    expect(wrapCardLine('Never fires: region selector without region')).toEqual(['Never fires: region selector','  without region']);
+    expect(wrapCardLine('Requires: firefly_02_go (target from link index)')).toEqual(['Requires: firefly_02_go (target','  from link index)']);
+    expect(wrapCardLine('x'.repeat(40))).toEqual(['x'.repeat(34),`  ${'x'.repeat(6)}`]);
+    expect(wrapCardLine('Health ≤ 0.000')).toEqual(['Health ≤ 0.000']);
+    const never={...graph.nodes[0],kind:'vlist-producer',ports:[{...graph.nodes[0].ports[0],channel:'firefly_02_go',value:1}],nativeRecord:[1,0,.25,0,0,.999,0,.8,1,0,0,0,0,60,1,'firefly_02_go',0]};
+    expect(nodeCardRows(never)).toHaveLength(2);
+    expect(nodeCardHeight(never)).toBe(nodeCardHeight({...never,nativeRecord:[1,0,.25,0,1,0,0,.8,0,0,0,0,0,60,1,'firefly_02_go',0]})+14);
   });
   it('summarizes target health output and threshold',()=>{
     const health={...graph.nodes[0],kind:'target-health-producer',subtitle:'satdish',ports:[{...graph.nodes[0].ports[0],channel:'comcntr_hit',value:1}],nativeRecord:['comcntr_hit',1,35]};

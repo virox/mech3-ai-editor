@@ -131,7 +131,24 @@ export function portOffsetY(node:ValveGraphNode,index:number){
 
 export function nodeIsActive(node:ValveGraphNode){return node.kind==='vlist-producer'&&enabled(recordValue(node,14))}
 
-export function nodeCardHeight(node:ValveGraphNode){return (hasDetailedCard(node)?Math.max(BLOCK_HEIGHT,92+nodeCardLines(node).length*14):BLOCK_HEIGHT)+nodeOutputOffset(node)}
+/** Characters per card row at the 12px condition font inside BLOCK_WIDTH. */
+export const CARD_ROW_CHARS=34;
+
+/** Word-wraps card lines to CARD_ROW_CHARS; continuation rows are indented, over-long words are split. */
+export function wrapCardLine(line:string,width=CARD_ROW_CHARS):string[]{
+  const rows:string[]=[];let row='';
+  for(const word of line.split(' ')){
+    const limit=rows.length?width-2:width;
+    if(row&&row.length+1+word.length>limit){rows.push(row);row=word}else row=row?`${row} ${word}`:word;
+    while(row.length>(rows.length?width-2:width)){const cut=rows.length?width-2:width;rows.push(row.slice(0,cut));row=row.slice(cut)}
+  }
+  if(row||!rows.length)rows.push(row);
+  return rows.map((text,index)=>index?`  ${text}`:text);
+}
+
+export function nodeCardRows(node:ValveGraphNode){return nodeCardLines(node).flatMap(line=>wrapCardLine(line))}
+
+export function nodeCardHeight(node:ValveGraphNode){return (hasDetailedCard(node)?Math.max(BLOCK_HEIGHT,92+nodeCardRows(node).length*14):BLOCK_HEIGHT)+nodeOutputOffset(node)}
 
 export function cycleNodeIds(graph:ValveGraphSnapshot):Set<string>{
   const links=new Map<string,string[]>();
