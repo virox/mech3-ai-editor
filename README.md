@@ -92,6 +92,23 @@ their original JSON-shaped records and survive archive round trips.
 
 ## Valve Switchboard companion
 
+### Industrial Control Panel
+
+The separate industrial panel uses the same live monitor with red glass lamps,
+tape channel labels, a large mission label, and a physical panel power switch.
+Start it from `switchboard` with `npm run panel:tauri:dev`, or build it with
+`npm run panel:tauri:build`. For a browser preview, use `npm run panel:dev`.
+`./build-industrial-portable.ps1` builds and copies a standalone executable to
+`release/industrial-panel/MechWarrior 3 Industrial Panel.exe`.
+Before the first live connection it displays a clearly marked preview circuit;
+after a connection is lost it shows no stale lit channels. One compatible game
+process is attached automatically. Only state channels are shown; nonzero
+valve values light a lamp. The power
+switch only switches the display. It never writes to the game.
+
+The monitor currently supplies no mission title, so the large tape defaults to
+MECHWARRIOR 3. A browser session can supply `?mission=Operation%20Damocles`.
+
 The separate **MechWarrior 3 Valve Switchboard** attaches to a running mission
 and displays every valve in the live registry. It currently supports only the
 validated `Mech3.exe 1.2.22` executable profile. The game must run at the same

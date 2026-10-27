@@ -5,10 +5,13 @@
     "dev": "vite --config vite.config.ts",
     "build": "vite build --config vite.config.ts",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "panel:dev": "vite --config vite.config.ts --open /industrial.html",
+    "panel:tauri:dev": "tauri dev --config src-tauri/tauri.industrial.conf.json",
+    "panel:tauri:build": "tauri build --config src-tauri/tauri.industrial.conf.json"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/api": "~2.11.0",
     "svelte": "^5.38.0"
   },
   "devDependencies": {

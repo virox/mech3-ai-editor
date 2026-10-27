@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MechWarrior 3 Industrial Panel",
+  "identifier": "tools.mech3.industrial-panel",
+  "app": {
+    "windows": [{
+      "title": "MechWarrior 3 — Industrial Control Panel",
+      "url": "industrial.html",
+      "width": 1240,
+      "height": 940,
+      "minWidth": 420,
+      "minHeight": 560
+    }]
+  }
+}
