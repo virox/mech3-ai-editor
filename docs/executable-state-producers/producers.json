@@ -1,0 +1,21 @@
+[
+  {
+    "channel": "mcbdeploy",
+    "kind": "runtime-producer",
+    "label": "MFB deployment state",
+    "initialValue": 0,
+    "knownValues": [0, 1],
+    "executable": "Mech3.exe",
+    "sha256": null,
+    "evidence": [
+      "string reference 0x005E4ACC",
+      "initialization FUN_00459E80: resolver call 0x00459FCD, then writer call 0x00459FE0 with value 0",
+      "runtime update 0x0045A7EB: the resolved MCB field +0x84 is written with value 1",
+      "runtime reset 0x0045B6D9: the same field is written with value 0",
+      "independent setup 0x004CFE40: resolves mcbdeploy and writer call 0x004CFE5D writes value 0",
+      "shared state writer FUN_004D3C00; name resolver FUN_004D3C40"
+    ],
+    "confidence": "confirmed",
+    "editable": false
+  }
+]

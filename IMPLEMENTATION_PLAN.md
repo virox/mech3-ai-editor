@@ -17,7 +17,8 @@
 2. Build a typed, lossless document index and a cross-document reference graph. Locked dependency layers remain read-only until explicitly unlocked.
 3. Keep AI Vehicles as one workspace, add a separate Valve Logic workspace, and add a separate Networks & Regions workspace with a large X/Z graph and numeric property editor.
 4. Export only changed archives to a separate directory while preserving their MW3-relative paths. Re-open written archives as verification.
-5. Keep Targets and Objectives navigable and reference-aware but read-only until their full schemas and original dialogs are recovered.
+5. Keep unconfirmed Targets and Objectives fields navigable and read-only. The confirmed `health_below` and `valve_change` forms are editable through the typed Behavior Graph without claiming a complete schema or recreating missing records.
+6. Project all confirmed producers, transforms, and consumers into the Behavior Graph and apply graph mutations transactionally to existing native hosts only.
 
 ## Safety and evidence rules
 

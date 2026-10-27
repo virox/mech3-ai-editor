@@ -1,0 +1,1021 @@
+{
+  "tabs": [
+    {
+      "blocks": [
+        {
+          "columns": 2,
+          "description": "Core fields stored at the start of every AI vehicle record.",
+          "fields": [
+            {
+              "binding": "name",
+              "control": "text",
+              "description": "Vehicle symbol used by other Reader documents.",
+              "format": "string",
+              "id": "vehicle-name",
+              "label": "Name",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "record[0]",
+              "control": "number",
+              "description": "Initial AI network identifier.",
+              "format": "integer",
+              "id": "vehicle-net",
+              "label": "Net ID",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "record[1][0]",
+              "control": "number",
+              "description": "Initial world X coordinate.",
+              "format": "decimal",
+              "id": "vehicle-x",
+              "label": "Position X",
+              "readOnly": false,
+              "width": "small"
+            },
+            {
+              "binding": "record[1][1]",
+              "control": "number",
+              "description": "Initial world Y coordinate.",
+              "format": "decimal",
+              "id": "vehicle-y",
+              "label": "Position Y",
+              "readOnly": false,
+              "width": "small"
+            },
+            {
+              "binding": "record[1][2]",
+              "control": "number",
+              "description": "Initial world Z coordinate.",
+              "format": "decimal",
+              "id": "vehicle-z",
+              "label": "Position Z",
+              "readOnly": false,
+              "width": "small"
+            },
+            {
+              "binding": "record[2]",
+              "control": "number",
+              "description": "Initial heading.",
+              "format": "decimal",
+              "id": "vehicle-yaw",
+              "label": "Yaw",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "vehicle-core",
+          "title": "Vehicle",
+          "type": "group"
+        },
+        {
+          "columns": 1,
+          "description": "Packed Team IDs and the optional Lancemate override.",
+          "fields": [
+            {
+              "binding": "record[3]",
+              "control": "team",
+              "description": "Stores Team IDs, not Friend / Foe / Other.",
+              "format": "integer",
+              "id": "vehicle-team-control",
+              "label": "Team membership",
+              "readOnly": false,
+              "width": "full"
+            }
+          ],
+          "id": "vehicle-team",
+          "title": "AI Network & Team",
+          "type": "group"
+        },
+        {
+          "columns": 2,
+          "description": "Default chassis and mission-start state.",
+          "fields": [
+            {
+              "binding": "tag:p12[0]",
+              "control": "select",
+              "description": "Chassis spawned for this vehicle.",
+              "format": "string",
+              "id": "p12-0",
+              "label": "Default chassis",
+              "optionSource": "chassis",
+              "readOnly": false,
+              "width": "wide"
+            },
+            {
+              "binding": "tag:p12[1]",
+              "control": "checkbox",
+              "description": "Enable objective-dependent activation.",
+              "format": "boolean",
+              "id": "p12-1",
+              "label": "Objective-conditional activation",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p12[2]",
+              "control": "checkbox",
+              "description": "Begin the mission shut down.",
+              "format": "boolean",
+              "id": "p12-2",
+              "label": "Start shut down",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "vehicle-config",
+          "presenceTag": "p12",
+          "title": "Vehicle Configuration",
+          "type": "group"
+        },
+        {
+          "columns": 2,
+          "description": "Optional pilot and skin identifiers.",
+          "fields": [
+            {
+              "binding": "tag:pilot[0]",
+              "control": "text",
+              "description": "Optional pilot identifier.",
+              "format": "string",
+              "id": "pilot",
+              "label": "Pilot",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:skin[0]",
+              "control": "text",
+              "description": "Optional skin identifier.",
+              "format": "string",
+              "id": "skin",
+              "label": "Skin",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "identity-tags",
+          "title": "Identity tags",
+          "type": "group"
+        }
+      ],
+      "description": "Identity, initial placement, team, chassis, and mission-start state.",
+      "id": "vehicle",
+      "title": "Vehicle"
+    },
+    {
+      "blocks": [
+        {
+          "columns": 3,
+          "description": "Initial enable gate plus activation, follow-target, and fire-control ranges and timing.",
+          "fields": [
+            {
+              "binding": "tag:params[0]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-0",
+              "label": "Activation range",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[1]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "params-1",
+              "label": "Enable Initial",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[2]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-2",
+              "label": "Leave-net distance",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[3]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-3",
+              "label": "Return-to-net distance",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[4]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-4",
+              "label": "Approach range",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[5]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-5",
+              "label": "Minimum range",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[6]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-6",
+              "label": "Maximum acquisition range",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[7]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-7",
+              "label": "Firing duration",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:params[8]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "params-8",
+              "label": "Cooldown duration",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "params",
+          "presenceTag": "params",
+          "title": "Activation & Engagement",
+          "type": "group"
+        }
+      ],
+      "description": "Activation, engagement ranges, follow behavior, and fire-control timing.",
+      "id": "activation",
+      "title": "Activation"
+    },
+    {
+      "blocks": [
+        {
+          "columns": 3,
+          "description": "Attack movement strategy plus the conditions that cause a retreat.",
+          "fields": [
+            {
+              "binding": "tag:p2[0]",
+              "control": "select",
+              "description": "",
+              "format": "integer",
+              "id": "p2-0",
+              "label": "Movement strategy",
+              "optionSource": "strategies",
+              "readOnly": false,
+              "width": "wide"
+            },
+            {
+              "binding": "tag:p2[4]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p2-4",
+              "label": "Strategy radius / Zig Zag length",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p2[5]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p2-5",
+              "label": "Zig Zag target distance",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p2[1]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p2-1",
+              "label": "Net-distance trigger enabled",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p2[2]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p2-2",
+              "label": "Time trigger enabled",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p2[3]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p2-3",
+              "label": "Health trigger enabled",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p2[6]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p2-6",
+              "label": "Time threshold",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p2[7]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p2-7",
+              "label": "Health threshold",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "p2",
+          "presenceTag": "p2",
+          "title": "Attack Strategy & Retreat Triggers",
+          "type": "group"
+        },
+        {
+          "columns": 3,
+          "description": "Scan/Jump timing, collision avoidance, attack throttle, and scan-trigger settings.",
+          "fields": [
+            {
+              "binding": "tag:p8[0]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-0",
+              "label": "Minimum delay",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[1]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-1",
+              "label": "Maximum delay",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[2]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-2",
+              "label": "Minimum hold duration",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[3]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-3",
+              "label": "Maximum hold duration",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[7]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-7",
+              "label": "Jump ceiling",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[16]",
+              "control": "select",
+              "description": "",
+              "format": "integer",
+              "id": "p8-16",
+              "label": "Parameter mode",
+              "optionSource": "scan-jump",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[4]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p8-4",
+              "label": "Collision avoidance enabled",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[5]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-5",
+              "label": "Alert distance",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[6]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-6",
+              "label": "Minimum distance",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[8]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-8",
+              "label": "Approach throttle",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[11]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-11",
+              "label": "Alpha-strike probability",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[12]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p8-12",
+              "label": "Attack throttle",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[9]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p8-9",
+              "label": "Always active",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[10]",
+              "control": "select",
+              "description": "",
+              "format": "integer",
+              "id": "p8-10",
+              "label": "Unknown range mode",
+              "optionSource": "binary",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[13]",
+              "control": "checkbox",
+              "description": "Initial scan trigger condition.",
+              "format": "boolean",
+              "id": "p8-13",
+              "label": "Aim",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[14]",
+              "control": "checkbox",
+              "description": "Initial scan trigger condition.",
+              "format": "boolean",
+              "id": "p8-14",
+              "label": "Hit",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p8[15]",
+              "control": "checkbox",
+              "description": "Initial scan trigger condition.",
+              "format": "boolean",
+              "id": "p8-15",
+              "label": "Time",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "p8",
+          "presenceTag": "p8",
+          "title": "Combat Behavior",
+          "type": "group"
+        }
+      ],
+      "description": "Attack strategy, combat movement, scan/jump timing, and targeting triggers.",
+      "id": "attack",
+      "title": "Attack"
+    },
+    {
+      "blocks": [
+        {
+          "columns": 2,
+          "description": "Controls initial activation and whether leaving the AI net disables behavior temporarily or permanently.",
+          "fields": [
+            {
+              "binding": "tag:p6[0]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p6-0",
+              "label": "Disabled",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p6[1]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p6-1",
+              "label": "Disable duration",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p6[2]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p6-2",
+              "label": "For duration",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p6[3]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p6-3",
+              "label": "Permanently",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "p6",
+          "presenceTag": "p6",
+          "title": "Activation & Post-Retreat Disable",
+          "type": "group"
+        },
+        {
+          "columns": 3,
+          "description": "Additional retreat behavior; three original meanings have not yet been recovered.",
+          "fields": [
+            {
+              "binding": "tag:p9[0]",
+              "control": "number",
+              "description": "Unresolved parameter.",
+              "format": "auto",
+              "id": "p9-0",
+              "label": "Unknown 0",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p9[1]",
+              "control": "number",
+              "description": "Unresolved parameter.",
+              "format": "auto",
+              "id": "p9-1",
+              "label": "Unknown 1",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p9[2]",
+              "control": "number",
+              "description": "Unresolved parameter.",
+              "format": "auto",
+              "id": "p9-2",
+              "label": "Unknown 2",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p9[3]",
+              "control": "checkbox",
+              "description": "Health-change retreat trigger.",
+              "format": "boolean",
+              "id": "p9-3",
+              "label": "Enabled",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p9[4]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p9-4",
+              "label": "Health-change threshold",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "p9",
+          "presenceTag": "p9",
+          "title": "Additional Retreat Parameters",
+          "type": "group"
+        }
+      ],
+      "description": "Disable and retreat behavior.",
+      "id": "retreat",
+      "title": "Retreat"
+    },
+    {
+      "blocks": [
+        {
+          "columns": 1,
+          "description": "Controls whether firing immediately ends an active scan.",
+          "fields": [
+            {
+              "binding": "tag:p13[0]",
+              "control": "checkbox",
+              "description": "",
+              "format": "boolean",
+              "id": "p13-0",
+              "label": "End scan when trigger is pulled",
+              "readOnly": false,
+              "width": "full"
+            }
+          ],
+          "id": "p13",
+          "presenceTag": "p13",
+          "title": "Scan Interruption",
+          "type": "group"
+        }
+      ],
+      "description": "Scan interruption behavior.",
+      "id": "scan-jump",
+      "title": "Scan / Jump"
+    },
+    {
+      "blocks": [
+        {
+          "columns": 2,
+          "description": "Accuracy settings used while attacking.",
+          "fields": [
+            {
+              "binding": "tag:p10[1]",
+              "control": "number",
+              "description": "Unresolved parameter.",
+              "format": "auto",
+              "id": "p10-1",
+              "label": "Unknown",
+              "readOnly": false,
+              "width": "normal"
+            },
+            {
+              "binding": "tag:p10[0]",
+              "control": "number",
+              "description": "test",
+              "format": "decimal",
+              "id": "p10-0",
+              "label": "Accuracy (0 = most accurate)",
+              "readOnly": false,
+              "width": "normal"
+            }
+          ],
+          "id": "p10",
+          "presenceTag": "p10",
+          "title": "Weapon Accuracy",
+          "type": "group"
+        },
+        {
+          "columns": 1,
+          "description": "Multiplier applied to fire-control or targeting-computer behavior.",
+          "fields": [
+            {
+              "binding": "tag:p11[0]",
+              "control": "number",
+              "description": "",
+              "format": "decimal",
+              "id": "p11-0",
+              "label": "FCS / TC multiplier",
+              "readOnly": false,
+              "width": "full"
+            }
+          ],
+          "id": "p11",
+          "presenceTag": "p11",
+          "title": "Fire-Control Multiplier",
+          "type": "group"
+        }
+      ],
+      "description": "Weapon accuracy and fire-control settings.",
+      "id": "fire",
+      "title": "Fire"
+    },
+    {
+      "blocks": [
+        {
+          "addLabel": "Add condition",
+          "binding": "tag:vlist",
+          "description": "Conditions write named state channels shared with Valve Logic, networks, targets, and objectives.",
+          "groups": [
+            {
+              "columns": 3,
+              "description": "State and channel written when the condition matches.",
+              "fields": [
+                {
+                  "binding": "item[0]",
+                  "control": "select",
+                  "description": "",
+                  "format": "integer",
+                  "id": "vlist-0",
+                  "label": "Valve state to set",
+                  "options": [
+                    {
+                      "label": "0 — Close",
+                      "value": "0"
+                    },
+                    {
+                      "label": "1 — Open",
+                      "value": "1"
+                    }
+                  ],
+                  "readOnly": false,
+                  "width": "small"
+                },
+                {
+                  "binding": "item[14]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-14",
+                  "label": "Condition Active",
+                  "readOnly": false,
+                  "width": "small"
+                },
+                {
+                  "binding": "item[15]",
+                  "control": "reference",
+                  "description": "",
+                  "format": "string",
+                  "id": "vlist-15",
+                  "label": "Valve to set",
+                  "readOnly": false,
+                  "referenceKind": "valve",
+                  "width": "small"
+                }
+              ],
+              "id": "vlist-result",
+              "title": "Valve Result",
+              "type": "group"
+            },
+            {
+              "columns": 2,
+              "description": "Ammo, damage, health, and heat conditions.",
+              "fields": [
+                {
+                  "binding": "item[1]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-1",
+                  "label": "Condition Ammo Enabled",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[2]",
+                  "control": "number",
+                  "description": "",
+                  "format": "decimal",
+                  "id": "vlist-2",
+                  "label": "Ammo Threshold",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[3]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-3",
+                  "label": "Condition Fired Upon",
+                  "readOnly": false,
+                  "width": "full"
+                },
+                {
+                  "binding": "item[4]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-4",
+                  "label": "Condition Health Enabled",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[5]",
+                  "control": "number",
+                  "description": "",
+                  "format": "decimal",
+                  "id": "vlist-5",
+                  "label": "Health Threshold",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[6]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-6",
+                  "label": "Condition Heat Enabled",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[7]",
+                  "control": "number",
+                  "description": "",
+                  "format": "decimal",
+                  "id": "vlist-7",
+                  "label": "Heat Threshold",
+                  "readOnly": false,
+                  "width": "normal"
+                }
+              ],
+              "id": "vlist-state",
+              "title": "Vehicle State Conditions",
+              "type": "group"
+            },
+            {
+              "columns": 3,
+              "description": "Enters and Exits are independent flags; the region name is shared.",
+              "fields": [
+                {
+                  "binding": "item[8]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-8",
+                  "label": "Condition Enters",
+                  "readOnly": false,
+                  "width": "small"
+                },
+                {
+                  "binding": "item[16]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-16",
+                  "label": "Condition Exits",
+                  "readOnly": false,
+                  "width": "small"
+                },
+                {
+                  "binding": "item[9]",
+                  "control": "reference",
+                  "description": "",
+                  "format": "string",
+                  "id": "vlist-9",
+                  "label": "Region Name",
+                  "readOnly": false,
+                  "referenceKind": "region",
+                  "width": "small"
+                }
+              ],
+              "id": "vlist-region",
+              "title": "Region Conditions",
+              "type": "group"
+            },
+            {
+              "columns": 2,
+              "description": "Line-of-sight and distance conditions.",
+              "fields": [
+                {
+                  "binding": "item[10]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-10",
+                  "label": "Condition Target LOS Enabled",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[11]",
+                  "control": "number",
+                  "description": "",
+                  "format": "decimal",
+                  "id": "vlist-11",
+                  "label": "Target LOS Range",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[12]",
+                  "control": "checkbox",
+                  "description": "",
+                  "format": "boolean",
+                  "id": "vlist-12",
+                  "label": "Condition Target Distance Enabled",
+                  "readOnly": false,
+                  "width": "normal"
+                },
+                {
+                  "binding": "item[13]",
+                  "control": "number",
+                  "description": "",
+                  "format": "decimal",
+                  "id": "vlist-13",
+                  "label": "Target Distance Threshold",
+                  "readOnly": false,
+                  "width": "normal"
+                }
+              ],
+              "id": "vlist-target",
+              "title": "Target Conditions",
+              "type": "group"
+            }
+          ],
+          "id": "vlist-repeater",
+          "itemLabel": "Condition",
+          "itemLength": 17,
+          "title": "Conditional Valve List",
+          "type": "repeater"
+        }
+      ],
+      "description": "Conditional Valve/state writes for this vehicle.",
+      "id": "vlist",
+      "title": "VList"
+    },
+    {
+      "blocks": [
+        {
+          "columns": 1,
+          "description": "Unknown tags remain in their original order.",
+          "fields": [
+            {
+              "binding": "record",
+              "control": "json",
+              "description": "Diagnostic view; editing remains disabled to protect unknown record structure.",
+              "format": "auto",
+              "id": "raw-json",
+              "label": "Vehicle record JSON",
+              "readOnly": true,
+              "width": "full"
+            }
+          ],
+          "id": "raw-record",
+          "title": "Raw vehicle record",
+          "type": "group"
+        }
+      ],
+      "description": "Read-only diagnostic representation of the complete vehicle record.",
+      "id": "raw",
+      "title": "Raw"
+    }
+  ],
+  "version": 1
+}

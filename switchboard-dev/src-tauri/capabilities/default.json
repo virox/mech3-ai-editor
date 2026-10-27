@@ -1,0 +1,1 @@
+{"identifier":"default","description":"Permissions for the developer Valve Switchboard window.","windows":["main"],"permissions":["core:default","dialog:allow-open"]}

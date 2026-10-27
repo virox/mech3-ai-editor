@@ -1,5 +1,8 @@
 # Reader document relationships
 
+For the complete state-machine explanation and concrete c1m1 traces, see
+[`valve-and-state-logic.md`](valve-and-state-logic.md).
+
 ## Shared Valve/state namespace
 
 MechWarrior 3 uses a global set of named boolean state channels. The name resolver at `FUN_004d3c40` first looks up an existing channel and creates it when absent. Consequently, the absence of a matching `valves.zrd` record is not an error by itself.

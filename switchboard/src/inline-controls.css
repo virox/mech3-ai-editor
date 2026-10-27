@@ -1,0 +1,78 @@
+.grid article > .led {
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #61717b;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.grid article > .led.on {
+  background: #5ee5a1;
+  box-shadow: 0 0 12px #39cf88;
+}
+
+.grid article > .led.other {
+  background: #f4b54e;
+  box-shadow: 0 0 12px #bf7f21;
+}
+
+.grid article > .led:focus-visible {
+  outline: 2px solid #f4b54e;
+  outline-offset: 3px;
+}
+
+.grid article > .led:disabled {
+  cursor: wait;
+}
+
+.inline-value {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  width: 9ch;
+  margin: 0;
+  padding: 0 0 1px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  appearance: textfield;
+  background: transparent;
+  color: #d7e7ee;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.grid article > .editable-value {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #d7e7ee;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: text;
+}
+
+.grid article > .editable-value:focus-visible {
+  border-bottom: 1px solid #ed7547;
+  outline: none;
+}
+
+.inline-value::-webkit-inner-spin-button,
+.inline-value::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.inline-value:focus {
+  border-bottom-color: #ed7547;
+  outline: none;
+}

@@ -1,4 +1,20 @@
 node_modules/
 dist/
+dist-layout/
+dist-switchboard/
+switchboard/dist/
 src-tauri/target/
+switchboard/src-tauri/target/
+switchboard/src-tauri/gen/
+switchboard-dev/node_modules/
+switchboard-dev/dist/
+switchboard-dev/src-tauri/target/
+switchboard-dev/src-tauri/gen/
+release/
 *.log
+
+# Extracted MechWarrior 3 game data (not redistributable)
+docs/aiv-research/extracted-anim-json/
+docs/aiv-research/extracted-reader-json/
+docs/aiv-research/source-reader-zips/
+docs/aiv-research/data/c4-gamez-for-brgprt.zip

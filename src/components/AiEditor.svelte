@@ -1,30 +1,47 @@
 <script lang="ts">
-  import type { FieldSection, Json, WorkspaceDocument, WorkspaceSnapshot } from '../types';
-  import { CHASSIS, GROUPS, STRATEGIES, VLIST } from '../types';
-  import { array, checked, ensureTag, isLocked, pairList, parseScalar, referenceNames, referencesFor, removeTag, scalar, tagArray, tags, vehicles, type VehicleView } from '../workspace';
-  let { workspace, document, onChanged, onNavigate }: { workspace:WorkspaceSnapshot; document:WorkspaceDocument; onChanged:()=>void; onNavigate:(kind:string,name:string)=>void } = $props();
-  let selected=$state(0); let tab=$state('Vehicle');
-  const tabs=['Vehicle','Activation','Attack','Retreat','Scan / Jump','Fire','VList','Raw'];
-  const booleanFields=new Set(['params[1]','p2[1]','p2[2]','p2[3]','p6[0]','p6[2]','p6[3]','p8[4]','p8[9]','p8[13]','p8[14]','p8[15]','p9[3]','p12[1]','p12[2]','p13[0]']);
-  const booleanVlistFields=new Set([1,3,4,6,8,10,12,14,16]);
-  const vlistSections:FieldSection[]=[{title:'Valve Result',indices:[0,14,15]},{title:'Vehicle-State Conditions',indices:[1,2,3,4,5,6,7]},{title:'Region Conditions',indices:[8,9,16]},{title:'Target Conditions',indices:[10,11,12,13]}];
+  import type { Json, WorkspaceDocument, WorkspaceSnapshot } from '../types';
+  import { CHASSIS, STRATEGIES } from '../types';
+  import { DEFAULT_AI_LAYOUT, addRepeaterItem, booleanValue, displayBinding, displayValue, fieldValue, groupPresent, removeRepeaterItem, repeaterItems, setFieldValue, setGroupPresent, tagValue, type AiLayout, type AiLayoutField, type AiLayoutGroup, type AiLayoutOption, type AiLayoutRepeater } from '../ai-layout';
+  import { inspectPackedTeams } from '../team';
+  import { array, isLocked, pairList, referenceNames, referencesFor, removeTag, tags, vehicles, type VehicleView } from '../workspace';
+  import TeamEditor from './TeamEditor.svelte';
+
+  let { workspace, document, layout=DEFAULT_AI_LAYOUT, onChanged, onNavigate }: { workspace:WorkspaceSnapshot; document:WorkspaceDocument; layout?:AiLayout; onChanged:()=>void; onNavigate:(kind:string,name:string)=>void } = $props();
+  let selected=$state(0);let tab=$state(localStorage.getItem('mech-reader-studio:ai-tab')??'');
+  $effect(()=>{if(!layout.tabs.some(candidate=>candidate.id===tab)){tab=layout.tabs[0]?.id??'';if(tab)localStorage.setItem('mech-reader-studio:ai-tab',tab)}});
   const touch=()=>onChanged();
-  function current():VehicleView|undefined { const list=vehicles(document);if(selected>=list.length)selected=Math.max(0,list.length-1);return list[selected]; }
-  function setField(values:Json[],i:number,text:string){values[i]=parseScalar(text,values[i]);touch()}
-  function setBoolean(values:Json[],i:number,value:boolean){values[i]=value?1:0;touch()}
-  function setBase(v:VehicleView,i:number,text:string){while(v.record.length<4)v.record.push(0);v.record[i]=parseScalar(text,v.record[i]);touch()}
+  function current():VehicleView|undefined { const list=vehicles(document);if(selected>=list.length)selected=Math.max(0,list.length-1);return list[selected] }
   function setName(v:VehicleView,text:string){pairList(document.root)[v.pairIndex]=text;touch()}
   function addVehicle(){const root=pairList(document.root);root.push('New Vehicle',[0,[0,0,0],0,0]);selected=vehicles(document).length-1;touch()}
   function duplicate(v:VehicleView){const root=pairList(document.root);root.splice(v.pairIndex+2,0,`${v.name} Copy`,structuredClone(v.record));selected++;touch()}
   function remove(v:VehicleView){pairList(document.root).splice(v.pairIndex,2);selected=Math.max(0,selected-1);touch()}
   function move(v:VehicleView,d:number){const root=pairList(document.root);const target=v.pairIndex+d*2;if(target<0||target>=root.length)return;const pair=root.splice(v.pairIndex,2);root.splice(target,0,...pair);selected+=d;touch()}
-  function setIdentity(v:VehicleView,key:string,text:string){const found=tags(v.record).find(x=>x.tag===key);if(found)v.record[found.at+1]=[text];else v.record.push(key,[text]);touch()}
-  function addVlist(v:VehicleView){ensureTag(v.record,'vlist',0).push(Array(17).fill(0));touch()}
-  function roles(name:Json|undefined){return typeof name==='string'?referencesFor(workspace,name):[]}
+  function changeField(v:VehicleView,field:AiLayoutField,value:string,item?:Json[]){setFieldValue(v,field,value,item,name=>setName(v,name));touch()}
+  function setTeam(v:VehicleView,value:number){while(v.record.length<4)v.record.push(0);v.record[3]=value;touch()}
+  function setLancemate(v:VehicleView,state:'auto'|'on'|'off'){
+    if(state==='auto')removeTag(v.record,'lancemate');
+    else {const found=tags(v.record).find(entry=>entry.tag==='lancemate');if(found)v.record[found.at+1]=[state];else v.record.push('lancemate',[state])}
+    touch();
+  }
+  function controlledTeam(){
+    const candidates=workspace.documents.filter(d=>d.kind==='aiv').flatMap(d=>vehicles(d).filter(v=>v.name.toLowerCase()==='player').map(v=>({vehicle:v,layer:d.layer})));
+    candidates.sort((a,b)=>(a.layer==='mission'?0:1)-(b.layer==='mission'?0:1));const candidate=candidates[0];if(!candidate)return undefined;
+    const info=inspectPackedTeams(candidate.vehicle.record[3]);return info.valid?{name:candidate.vehicle.name,teamIds:info.teamIds,layer:candidate.layer}:undefined;
+  }
+  function options(field:AiLayoutField):AiLayoutOption[]{
+    if(field.optionSource==='strategies')return STRATEGIES.map((label,value)=>({value:String(value),label:`${value} — ${label}`}));
+    if(field.optionSource==='chassis')return CHASSIS.map(value=>({value,label:value}));
+    if(field.optionSource==='binary')return [{value:'0',label:'0'},{value:'1',label:'1'}];
+    if(field.optionSource==='scan-jump')return [{value:'0',label:'0 — Scan'},{value:'1',label:'1 — Jump'}];
+    return field.options??[];
+  }
+  function referenceValue(v:VehicleView,field:AiLayoutField,item?:Json[]):string { const value=fieldValue(v,field.binding,item);return typeof value==='string'?value:value==null||value===0?'':String(value) }
+  function referenceList(field:AiLayoutField):string[]{return field.referenceKind&&field.referenceKind!=='none'?referenceNames(workspace,field.referenceKind):[]}
+  function roles(v:VehicleView,field:AiLayoutField,item?:Json[]){const value=fieldValue(v,field.binding,item);return typeof value==='string'?referencesFor(workspace,value):[]}
+  function selectTab(id:string){tab=id;localStorage.setItem('mech-reader-studio:ai-tab',id)}
 </script>
 
-<datalist id="ai-valve-names">{#each referenceNames(workspace,'valve') as name}<option value={name}></option>{/each}</datalist>
-<datalist id="ai-region-names">{#each referenceNames(workspace,'region') as name}<option value={name}></option>{/each}</datalist>
+{#each ['valve','region','vehicle','network'] as kind}<datalist id={`ai-reference-${kind}`}>{#each referenceNames(workspace,kind) as name}<option value={name}></option>{/each}</datalist>{/each}
 
 <div class="editor-shell">
   <aside class="object-sidebar">
@@ -34,25 +51,45 @@
   </aside>
   <section class="editor-workspace">
     {#if isLocked(workspace,document)}<div class="locked-banner">This document belongs to a locked {document.layer} Reader. Unlock that archive to edit it.</div>{/if}
-    <nav class="subnav">{#each tabs as name}<button class:active={tab===name} onclick={()=>tab=name}>{name}</button>{/each}</nav>
-    {#if current()}{@const v=current()!}<fieldset disabled={isLocked(workspace,document)} class="editor-fields"><div class="page">
-      {#if tab==='Vehicle'}
-        <div class="card"><h2>Vehicle</h2><div class="subsection"><h3>Identity</h3><div class="grid"><label class="wide"><span class="field-title">Name <small>(name)</small></span><input value={v.name} oninput={e=>setName(v,e.currentTarget.value)}></label></div></div><div class="subsection"><h3>Initial Vehicle Position</h3><div class="grid">{#each ['X','Y','Z'] as axis,i}<label><span class="field-title">Position {axis} <small>(record[1][{i}])</small></span><input value={scalar(array(v.record[1])[i])} oninput={e=>{const p=array(v.record[1]);while(p.length<3)p.push(0);p[i]=parseScalar(e.currentTarget.value,p[i]);v.record[1]=p;touch()}}></label>{/each}<label><span class="field-title">Yaw <small>(record[2])</small></span><input value={scalar(v.record[2])} oninput={e=>setBase(v,2,e.currentTarget.value)}></label></div></div><div class="subsection"><h3>AI Network & Team</h3><div class="grid"><label><span class="field-title">Net ID <small>(record[0])</small></span><input value={scalar(v.record[0])} oninput={e=>setBase(v,0,e.currentTarget.value)}></label><label><span class="field-title">Team / allegiance <small>(record[3])</small></span><input value={scalar(v.record[3])} oninput={e=>setBase(v,3,e.currentTarget.value)}></label></div></div></div>
-        {@render Group(v,'p12',GROUPS.p12.title,GROUPS.p12.description,GROUPS.p12.labels,GROUPS.p12.sections)}
-        <div class="card"><h2>Identity tags</h2><div class="grid">{#each ['pilot','skin'] as key}<label><span class="field-title">{key[0].toUpperCase()+key.slice(1)} <small>({key})</small></span><input value={scalar(tagArray(v.record,key)?.[0] ?? '')} oninput={e=>setIdentity(v,key,e.currentTarget.value)}></label>{/each}</div></div>
-      {:else if tab==='VList'}
-        <div class="card"><div class="title-row"><div><h2>Conditional Valve List <small>(vlist)</small></h2><p>Conditions on this vehicle write named state channels shared with Valve Logic, networks, targets, and objectives.</p></div><button onclick={()=>addVlist(v)}>Add condition</button></div>
-        {#each tagArray(v.record,'vlist') ?? [] as row,ri}{@const values=array(row)}<div class="vrow"><div class="row-head"><b>Condition {ri+1}</b><button onclick={()=>{tagArray(v.record,'vlist')!.splice(ri,1);touch()}}>Remove</button></div>{#each vlistSections as section}<div class="subsection"><h3>{section.title}</h3><div class="grid">{#each section.indices as i}<label><span class="field-title">{VLIST[i]} <small>(vlist[{ri}][{i}])</small></span>{#if i===0}<select value={scalar(values[i])} onchange={e=>setField(values,i,e.currentTarget.value)}><option value="0">0 — Close</option><option value="1">1 — Open</option></select>{:else if i===15}<input list="ai-valve-names" value={scalar(values[i])} oninput={e=>setField(values,i,e.currentTarget.value)}>{#if roles(values[i]).length}<div class="role-strip">{#each roles(values[i]).slice(0,4) as ref}<span title={ref.location}>{ref.role} · {ref.layer}</span>{/each}</div>{/if}{:else if i===9}<div class="reference-input"><input list="ai-region-names" value={scalar(values[i])} oninput={e=>setField(values,i,e.currentTarget.value)}><button type="button" disabled={typeof values[i]!=='string'} onclick={()=>onNavigate('region',String(values[i]))}>Open</button></div>{:else if booleanVlistFields.has(i)}<span class="boolean-control"><input type="checkbox" checked={checked(values[i])} onchange={e=>setBoolean(values,i,e.currentTarget.checked)}><span>{checked(values[i])?'On':'Off'}</span></span>{:else}<input value={scalar(values[i])} oninput={e=>setField(values,i,e.currentTarget.value)}>{/if}</label>{/each}</div></div>{/each}</div>{/each}
-        {#if !(tagArray(v.record,'vlist')?.length)}<div class="empty">No VList conditions in this vehicle.</div>{/if}</div>
-      {:else if tab==='Raw'}
-        <div class="card"><h2>Raw vehicle record</h2><p>Read-only diagnostic view. Unknown tags remain in their original order.</p><pre>{JSON.stringify(v.record,null,2)}</pre></div>
-      {:else}
-        {#each Object.entries(GROUPS).filter(([,group])=>group.tab===tab) as [key,group]}{@render Group(v,key,group.title,group.description,group.labels,group.sections)}{/each}
-      {/if}
+    <nav class="subnav">{#each layout.tabs as candidate}<button class:active={tab===candidate.id} onclick={()=>selectTab(candidate.id)}>{candidate.title}</button>{/each}</nav>
+    {#if current()}{@const v=current()!}{@const activeTab=layout.tabs.find(candidate=>candidate.id===tab)}<fieldset disabled={isLocked(workspace,document)} class="editor-fields"><div class="page">
+      {#if activeTab?.description}<p class="tab-description">{activeTab.description}</p>{/if}
+      {#each activeTab?.blocks??[] as block (block.id)}{#if block.type==='group'}{@render Group(v,block)}{:else}{@render Repeater(v,block)}{/if}{/each}
+      {#if !activeTab?.blocks.length}<div class="empty">This tab has no groups.</div>{/if}
     </div></fieldset>{:else}<div class="empty-state"><h2>No AI vehicles</h2><p>This aiv.zrd contains no editable name/record pairs.</p></div>{/if}
   </section>
 </div>
 
-{#snippet Group(v:VehicleView,key:string,title:string,description:string,labels:string[],sections:FieldSection[])}
-  {@const value=tagArray(v.record,key)}<div class="card"><div class="title-row"><div><h2>{title} <small>({key})</small></h2><p>{description}</p></div><label class="switch"><input type="checkbox" checked={!!value} onchange={e=>{e.currentTarget.checked?ensureTag(v.record,key,labels.length):removeTag(v.record,key);touch()}}> Present</label></div>{#if value}{#each sections as section}<div class="subsection"><h3>{section.title}</h3><div class="grid">{#each section.indices as i}<label><span class="field-title">{labels[i]} <small>({key}[{i}])</small></span>{#if key==='p2'&&i===0}<select value={scalar(value[i])} onchange={e=>setField(value,i,e.currentTarget.value)}>{#each STRATEGIES as strategy,si}<option value={String(si)}>{si} — {strategy}</option>{/each}</select>{:else if key==='p8'&&i===10}<select value={scalar(value[i])} onchange={e=>setField(value,i,e.currentTarget.value)}><option value="0">0</option><option value="1">1</option></select>{:else if key==='p8'&&i===16}<select value={scalar(value[i])} onchange={e=>setField(value,i,e.currentTarget.value)}><option value="0">0 — Scan</option><option value="1">1 — Jump</option></select>{:else if key==='p12'&&i===0}<select value={scalar(value[i])} onchange={e=>setField(value,i,e.currentTarget.value)}>{#each CHASSIS as chassis}<option value={chassis}>{chassis}</option>{/each}</select>{:else if booleanFields.has(`${key}[${i}]`)}<span class="boolean-control"><input type="checkbox" checked={checked(value[i])} onchange={e=>setBoolean(value,i,e.currentTarget.checked)}><span>{checked(value[i])?'On':'Off'}</span></span>{:else}<input value={scalar(value[i])} oninput={e=>setField(value,i,e.currentTarget.value)}>{/if}</label>{/each}</div></div>{/each}{:else}<div class="empty">This optional section is not present for this vehicle.</div>{/if}</div>
+{#snippet Group(v:VehicleView,group:AiLayoutGroup,item?:Json[])}
+  {@const present=groupPresent(v,group)}
+  <div class="card layout-group"><div class="title-row"><div><h2>{group.title}{#if group.presenceTag} <small>({group.presenceTag})</small>{/if}</h2>{#if group.description}<p>{group.description}</p>{/if}</div>{#if group.presenceTag}<label class="switch"><input type="checkbox" checked={present} onchange={event=>{setGroupPresent(v,group,event.currentTarget.checked);touch()}}> Present</label>{/if}</div>
+    {#if present}<div class="layout-field-grid columns-{group.columns}">{#each group.fields as field (field.id)}{@render Field(v,field,item)}{/each}</div>{:else}<div class="empty">This optional section is not present for this vehicle.</div>{/if}
+  </div>
 {/snippet}
+
+{#snippet Repeater(v:VehicleView,repeater:AiLayoutRepeater)}
+  {@const items=repeaterItems(v,repeater)}
+  <div class="card repeater-card"><div class="title-row"><div><h2>{repeater.title} <small>({repeater.binding})</small></h2>{#if repeater.description}<p>{repeater.description}</p>{/if}</div><button type="button" onclick={()=>{addRepeaterItem(v,repeater);touch()}}>{repeater.addLabel}</button></div>
+    {#each items as rawItem,index (index)}{#if Array.isArray(rawItem)}<div class="repeater-item"><div class="row-head"><b>{repeater.itemLabel} {index+1}</b><button type="button" onclick={()=>{removeRepeaterItem(v,repeater,index);touch()}}>Remove</button></div>{#each repeater.groups as group (group.id)}{@render Group(v,group,array(rawItem))}{/each}</div>{/if}{/each}
+    {#if !items.length}<div class="empty">No {repeater.itemLabel.toLowerCase()} entries.</div>{/if}
+  </div>
+{/snippet}
+
+{#snippet Field(v:VehicleView,field:AiLayoutField,item?:Json[])}
+  {#if field.control==='team'}
+    <div class="layout-field width-{field.width}"><TeamEditor value={v.record[3]} lancemate={tagValue(v,'lancemate')} reference={controlledTeam()} title={field.label} description={field.description} sourceLabel={displayBinding(field.binding)} onChange={value=>setTeam(v,value)} onLancemateChange={state=>setLancemate(v,state)}/></div>
+  {:else if field.control==='json'}
+    <div class="layout-field width-{field.width}"><span class="field-title">{field.label} <small>({displayBinding(field.binding)})</small></span>{#if field.description}<small class="field-description">{field.description}</small>{/if}<pre class="layout-json">{JSON.stringify(fieldValue(v,field.binding,item),null,2)}</pre></div>
+  {:else}
+    <label class="layout-field width-{field.width}"><span class="field-title">{field.label} <small>({displayBinding(field.binding)})</small></span>{#if field.description}<small class="field-description">{field.description}</small>{/if}
+      {#if field.control==='checkbox'}<span class="boolean-control"><input type="checkbox" disabled={field.readOnly} checked={booleanValue(v,field,item)} onchange={event=>changeField(v,field,event.currentTarget.checked?'1':'0',item)}><span>{booleanValue(v,field,item)?'On':'Off'}</span></span>
+      {:else if field.control==='select'}<select disabled={field.readOnly} value={displayValue(v,field,item)} onchange={event=>changeField(v,field,event.currentTarget.value,item)}>{#each options(field) as option}<option value={option.value}>{option.label}</option>{/each}</select>
+      {:else if field.control==='reference'}<div class="reference-input"><input disabled={field.readOnly} list={`ai-reference-${field.referenceKind??'none'}`} value={referenceValue(v,field,item)} oninput={event=>changeField(v,field,event.currentTarget.value,item)}>{#if field.referenceKind==='region'}<button type="button" disabled={!referenceList(field).includes(referenceValue(v,field,item))} onclick={()=>onNavigate('region',referenceValue(v,field,item))}>Open</button>{/if}</div>{#if roles(v,field,item).length}<div class="role-strip">{#each roles(v,field,item).slice(0,4) as reference}<span title={reference.location}>{reference.role} · {reference.layer}</span>{/each}</div>{/if}
+      {:else}<input disabled={field.readOnly} type={field.control==='number'?'number':'text'} step={field.format==='integer'?'1':'any'} value={displayValue(v,field,item)} oninput={event=>changeField(v,field,event.currentTarget.value,item)}>{/if}
+    </label>
+  {/if}
+{/snippet}
+
+<style>
+  .tab-description{margin:0 0 15px;color:#8fa3aa}.layout-group+.layout-group,.layout-group+.repeater-card,.repeater-card+.layout-group{margin-top:14px}.layout-field-grid{display:flex;flex-wrap:wrap;align-items:flex-start;gap:13px;margin-top:15px}.layout-field{min-width:0}.layout-field.width-small{flex:0 0 calc((100% - 26px)/3)}.layout-field.width-normal{flex:0 0 calc((100% - 13px)/2)}.layout-field.width-wide{flex:1 1 0%;min-width:0}.layout-field.width-full{flex:0 0 100%}.field-description{display:block;min-height:14px;margin:3px 0 6px;color:#7f939a;font-size:10px;line-height:1.35}.layout-json{max-height:480px;margin:0;overflow:auto}.repeater-item{margin-top:16px;padding:12px;border:1px solid #2e4047;border-radius:7px;background:#0d1519}.repeater-item .layout-group{margin-top:10px;background:#111b20}.repeater-item .layout-group:first-of-type{margin-top:0}.team-editor{margin-top:0}@media(max-width:1350px){.layout-field-grid.columns-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>

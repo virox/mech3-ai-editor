@@ -1,0 +1,2245 @@
+{
+  "aiv_files_found": 48,
+  "parameter_occurrences": 2768,
+  "unique_key_value_pairs": 736,
+  "parameter_bundles": 421,
+  "unique_parameter_bundles": 296,
+  "keys": [
+    {
+      "key": "params",
+      "occurrence_count": 416,
+      "unique_value_count": 192,
+      "source_count": 36,
+      "entity_count": 100,
+      "value_lengths": {
+        "9": 416
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 8,
+          "values": [
+            {
+              "value": 500.0,
+              "count": 188
+            },
+            {
+              "value": 1000.0,
+              "count": 157
+            },
+            {
+              "value": 2000.0,
+              "count": 33
+            },
+            {
+              "value": 1500.0,
+              "count": 21
+            },
+            {
+              "value": 1200.0,
+              "count": 8
+            },
+            {
+              "value": 1400.0,
+              "count": 5
+            },
+            {
+              "value": 700.0,
+              "count": 3
+            },
+            {
+              "value": 2500.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 327
+            },
+            {
+              "value": 1,
+              "count": 89
+            }
+          ]
+        },
+        "field_02": {
+          "distinct_value_count": 21,
+          "values": [
+            {
+              "value": 100.0,
+              "count": 85
+            },
+            {
+              "value": 800.0,
+              "count": 59
+            },
+            {
+              "value": 1000.0,
+              "count": 52
+            },
+            {
+              "value": 300.0,
+              "count": 45
+            },
+            {
+              "value": 500.0,
+              "count": 41
+            },
+            {
+              "value": 900.0,
+              "count": 25
+            },
+            {
+              "value": 600.0,
+              "count": 24
+            },
+            {
+              "value": 400.0,
+              "count": 23
+            },
+            {
+              "value": 200.0,
+              "count": 10
+            },
+            {
+              "value": 850.0,
+              "count": 10
+            },
+            {
+              "value": 250.0,
+              "count": 8
+            },
+            {
+              "value": 700.0,
+              "count": 8
+            },
+            {
+              "value": 50.0,
+              "count": 6
+            },
+            {
+              "value": 150.0,
+              "count": 5
+            },
+            {
+              "value": 20.0,
+              "count": 5
+            },
+            {
+              "value": 1.0,
+              "count": 4
+            },
+            {
+              "value": 950.0,
+              "count": 2
+            },
+            {
+              "value": 120.0,
+              "count": 1
+            },
+            {
+              "value": 125.0,
+              "count": 1
+            },
+            {
+              "value": 350.0,
+              "count": 1
+            },
+            {
+              "value": 650.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_03": {
+          "distinct_value_count": 27,
+          "values": [
+            {
+              "value": 200.0,
+              "count": 123
+            },
+            {
+              "value": 600.0,
+              "count": 53
+            },
+            {
+              "value": 400.0,
+              "count": 40
+            },
+            {
+              "value": 150.0,
+              "count": 38
+            },
+            {
+              "value": 300.0,
+              "count": 28
+            },
+            {
+              "value": 550.0,
+              "count": 25
+            },
+            {
+              "value": 100.0,
+              "count": 24
+            },
+            {
+              "value": 500.0,
+              "count": 22
+            },
+            {
+              "value": 10.0,
+              "count": 10
+            },
+            {
+              "value": 20.0,
+              "count": 7
+            },
+            {
+              "value": 50.0,
+              "count": 7
+            },
+            {
+              "value": 30.0,
+              "count": 6
+            },
+            {
+              "value": 450.0,
+              "count": 6
+            },
+            {
+              "value": 250.0,
+              "count": 5
+            },
+            {
+              "value": 350.0,
+              "count": 4
+            },
+            {
+              "value": 1.0,
+              "count": 3
+            },
+            {
+              "value": 360.0,
+              "count": 2
+            },
+            {
+              "value": 375.0,
+              "count": 2
+            },
+            {
+              "value": 70.0,
+              "count": 2
+            },
+            {
+              "value": 800.0,
+              "count": 2
+            },
+            {
+              "value": 1150.0,
+              "count": 1
+            },
+            {
+              "value": 130.0,
+              "count": 1
+            },
+            {
+              "value": 25.0,
+              "count": 1
+            },
+            {
+              "value": 465.0,
+              "count": 1
+            },
+            {
+              "value": 475.0,
+              "count": 1
+            },
+            {
+              "value": 60.0,
+              "count": 1
+            },
+            {
+              "value": 650.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_04": {
+          "distinct_value_count": 16,
+          "values": [
+            {
+              "value": 50.0,
+              "count": 132
+            },
+            {
+              "value": 80.0,
+              "count": 89
+            },
+            {
+              "value": 60.0,
+              "count": 82
+            },
+            {
+              "value": 70.0,
+              "count": 36
+            },
+            {
+              "value": 100.0,
+              "count": 19
+            },
+            {
+              "value": 85.0,
+              "count": 12
+            },
+            {
+              "value": 45.0,
+              "count": 11
+            },
+            {
+              "value": 40.0,
+              "count": 6
+            },
+            {
+              "value": 90.0,
+              "count": 6
+            },
+            {
+              "value": 20.0,
+              "count": 5
+            },
+            {
+              "value": 30.0,
+              "count": 5
+            },
+            {
+              "value": 0.0,
+              "count": 4
+            },
+            {
+              "value": 75.0,
+              "count": 4
+            },
+            {
+              "value": 150.0,
+              "count": 2
+            },
+            {
+              "value": 65.0,
+              "count": 2
+            },
+            {
+              "value": 55.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_05": {
+          "distinct_value_count": 13,
+          "values": [
+            {
+              "value": 42.0,
+              "count": 108
+            },
+            {
+              "value": 30.0,
+              "count": 83
+            },
+            {
+              "value": 40.0,
+              "count": 78
+            },
+            {
+              "value": 35.0,
+              "count": 66
+            },
+            {
+              "value": 50.0,
+              "count": 20
+            },
+            {
+              "value": 25.0,
+              "count": 19
+            },
+            {
+              "value": 45.0,
+              "count": 15
+            },
+            {
+              "value": 60.0,
+              "count": 6
+            },
+            {
+              "value": 10.0,
+              "count": 5
+            },
+            {
+              "value": 15.0,
+              "count": 5
+            },
+            {
+              "value": 20.0,
+              "count": 5
+            },
+            {
+              "value": 0.0,
+              "count": 4
+            },
+            {
+              "value": 70.0,
+              "count": 2
+            }
+          ]
+        },
+        "field_06": {
+          "distinct_value_count": 10,
+          "values": [
+            {
+              "value": 1000.0,
+              "count": 342
+            },
+            {
+              "value": 200.0,
+              "count": 17
+            },
+            {
+              "value": 600.0,
+              "count": 17
+            },
+            {
+              "value": 500.0,
+              "count": 14
+            },
+            {
+              "value": 0.0,
+              "count": 10
+            },
+            {
+              "value": 120.0,
+              "count": 5
+            },
+            {
+              "value": 300.0,
+              "count": 4
+            },
+            {
+              "value": 1.0,
+              "count": 3
+            },
+            {
+              "value": 800.0,
+              "count": 3
+            },
+            {
+              "value": 60.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_07": {
+          "distinct_value_count": 16,
+          "values": [
+            {
+              "value": 4.0,
+              "count": 134
+            },
+            {
+              "value": 5.0,
+              "count": 104
+            },
+            {
+              "value": 3.0,
+              "count": 54
+            },
+            {
+              "value": 2.0,
+              "count": 47
+            },
+            {
+              "value": 6.0,
+              "count": 38
+            },
+            {
+              "value": 1.0,
+              "count": 12
+            },
+            {
+              "value": 8.0,
+              "count": 7
+            },
+            {
+              "value": 2.5,
+              "count": 5
+            },
+            {
+              "value": 1.2000000476837158,
+              "count": 4
+            },
+            {
+              "value": 10.0,
+              "count": 3
+            },
+            {
+              "value": 0.0,
+              "count": 2
+            },
+            {
+              "value": 0.6000000238418579,
+              "count": 2
+            },
+            {
+              "value": 1.2999999523162842,
+              "count": 1
+            },
+            {
+              "value": 1.5,
+              "count": 1
+            },
+            {
+              "value": 1.7000000476837158,
+              "count": 1
+            },
+            {
+              "value": 1.7999999523162842,
+              "count": 1
+            }
+          ]
+        },
+        "field_08": {
+          "distinct_value_count": 14,
+          "values": [
+            {
+              "value": 1.0,
+              "count": 309
+            },
+            {
+              "value": 0.5,
+              "count": 56
+            },
+            {
+              "value": 2.0,
+              "count": 12
+            },
+            {
+              "value": 1.5,
+              "count": 10
+            },
+            {
+              "value": 1.399999976158142,
+              "count": 6
+            },
+            {
+              "value": 3.0,
+              "count": 4
+            },
+            {
+              "value": 7.5,
+              "count": 4
+            },
+            {
+              "value": 8.0,
+              "count": 4
+            },
+            {
+              "value": 4.0,
+              "count": 3
+            },
+            {
+              "value": 0.0,
+              "count": 2
+            },
+            {
+              "value": 1.2000000476837158,
+              "count": 2
+            },
+            {
+              "value": 2.200000047683716,
+              "count": 2
+            },
+            {
+              "value": 0.10000000149011612,
+              "count": 1
+            },
+            {
+              "value": 5.0,
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p2",
+      "occurrence_count": 397,
+      "unique_value_count": 174,
+      "source_count": 33,
+      "entity_count": 96,
+      "value_lengths": {
+        "8": 397
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 3,
+          "values": [
+            {
+              "value": 0,
+              "count": 188
+            },
+            {
+              "value": 2,
+              "count": 106
+            },
+            {
+              "value": 1,
+              "count": 103
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 287
+            },
+            {
+              "value": 0,
+              "count": 110
+            }
+          ]
+        },
+        "field_02": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 247
+            },
+            {
+              "value": 0,
+              "count": 150
+            }
+          ]
+        },
+        "field_03": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 368
+            },
+            {
+              "value": 1,
+              "count": 29
+            }
+          ]
+        },
+        "field_04": {
+          "distinct_value_count": 17,
+          "values": [
+            {
+              "value": 50.0,
+              "count": 128
+            },
+            {
+              "value": 60.0,
+              "count": 87
+            },
+            {
+              "value": 80.0,
+              "count": 52
+            },
+            {
+              "value": 65.0,
+              "count": 30
+            },
+            {
+              "value": 40.0,
+              "count": 16
+            },
+            {
+              "value": 45.0,
+              "count": 16
+            },
+            {
+              "value": 55.0,
+              "count": 13
+            },
+            {
+              "value": 70.0,
+              "count": 13
+            },
+            {
+              "value": 20.0,
+              "count": 10
+            },
+            {
+              "value": 100.0,
+              "count": 9
+            },
+            {
+              "value": 35.0,
+              "count": 6
+            },
+            {
+              "value": 30.0,
+              "count": 5
+            },
+            {
+              "value": 75.0,
+              "count": 5
+            },
+            {
+              "value": 350.0,
+              "count": 4
+            },
+            {
+              "value": 25.0,
+              "count": 1
+            },
+            {
+              "value": 85.0,
+              "count": 1
+            },
+            {
+              "value": 90.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_05": {
+          "distinct_value_count": 10,
+          "values": [
+            {
+              "value": 50.0,
+              "count": 222
+            },
+            {
+              "value": 30.0,
+              "count": 44
+            },
+            {
+              "value": 25.0,
+              "count": 36
+            },
+            {
+              "value": 40.0,
+              "count": 35
+            },
+            {
+              "value": 20.0,
+              "count": 28
+            },
+            {
+              "value": 60.0,
+              "count": 14
+            },
+            {
+              "value": 35.0,
+              "count": 9
+            },
+            {
+              "value": 10.0,
+              "count": 7
+            },
+            {
+              "value": 65.0,
+              "count": 1
+            },
+            {
+              "value": 80.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_06": {
+          "distinct_value_count": 15,
+          "values": [
+            {
+              "value": 20.0,
+              "count": 165
+            },
+            {
+              "value": 30.0,
+              "count": 98
+            },
+            {
+              "value": 25.0,
+              "count": 40
+            },
+            {
+              "value": 12.0,
+              "count": 33
+            },
+            {
+              "value": 10.0,
+              "count": 15
+            },
+            {
+              "value": 15.0,
+              "count": 11
+            },
+            {
+              "value": 16.0,
+              "count": 8
+            },
+            {
+              "value": 5.0,
+              "count": 7
+            },
+            {
+              "value": 60.0,
+              "count": 5
+            },
+            {
+              "value": 35.0,
+              "count": 4
+            },
+            {
+              "value": 40.0,
+              "count": 4
+            },
+            {
+              "value": 18.0,
+              "count": 3
+            },
+            {
+              "value": 14.0,
+              "count": 2
+            },
+            {
+              "value": 1.5,
+              "count": 1
+            },
+            {
+              "value": 8.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_07": {
+          "distinct_value_count": 8,
+          "values": [
+            {
+              "value": 0.10000000149011612,
+              "count": 368
+            },
+            {
+              "value": 0.5,
+              "count": 9
+            },
+            {
+              "value": 0.4000000059604645,
+              "count": 6
+            },
+            {
+              "value": 0.25,
+              "count": 4
+            },
+            {
+              "value": 0.30000001192092896,
+              "count": 4
+            },
+            {
+              "value": 0.800000011920929,
+              "count": 3
+            },
+            {
+              "value": 0.20000000298023224,
+              "count": 2
+            },
+            {
+              "value": 2.0,
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p6",
+      "occurrence_count": 305,
+      "unique_value_count": 17,
+      "source_count": 34,
+      "entity_count": 82,
+      "value_lengths": {
+        "4": 305
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 304
+            },
+            {
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 12,
+          "values": [
+            {
+              "value": 5.0,
+              "count": 78
+            },
+            {
+              "value": 10.0,
+              "count": 68
+            },
+            {
+              "value": 4.0,
+              "count": 53
+            },
+            {
+              "value": 2.0,
+              "count": 41
+            },
+            {
+              "value": 8.0,
+              "count": 26
+            },
+            {
+              "value": 30.0,
+              "count": 16
+            },
+            {
+              "value": 3.0,
+              "count": 8
+            },
+            {
+              "value": 15.0,
+              "count": 5
+            },
+            {
+              "value": 1.0,
+              "count": 4
+            },
+            {
+              "value": 20.0,
+              "count": 3
+            },
+            {
+              "value": 40.0,
+              "count": 2
+            },
+            {
+              "value": 12.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_02": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 297
+            },
+            {
+              "value": 0,
+              "count": 8
+            }
+          ]
+        },
+        "field_03": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 302
+            },
+            {
+              "value": 1,
+              "count": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p8",
+      "occurrence_count": 417,
+      "unique_value_count": 219,
+      "source_count": 36,
+      "entity_count": 100,
+      "value_lengths": {
+        "17": 417
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 15,
+          "values": [
+            {
+              "value": 12.0,
+              "count": 93
+            },
+            {
+              "value": 10.0,
+              "count": 68
+            },
+            {
+              "value": 16.0,
+              "count": 51
+            },
+            {
+              "value": 6.0,
+              "count": 46
+            },
+            {
+              "value": 8.0,
+              "count": 44
+            },
+            {
+              "value": 5.0,
+              "count": 32
+            },
+            {
+              "value": 14.0,
+              "count": 26
+            },
+            {
+              "value": 20.0,
+              "count": 19
+            },
+            {
+              "value": 4.0,
+              "count": 16
+            },
+            {
+              "value": 15.0,
+              "count": 9
+            },
+            {
+              "value": 3.0,
+              "count": 5
+            },
+            {
+              "value": 18.0,
+              "count": 3
+            },
+            {
+              "value": 45.0,
+              "count": 3
+            },
+            {
+              "value": 30.0,
+              "count": 1
+            },
+            {
+              "value": 40.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 21,
+          "values": [
+            {
+              "value": 20.0,
+              "count": 71
+            },
+            {
+              "value": 10.0,
+              "count": 61
+            },
+            {
+              "value": 15.0,
+              "count": 55
+            },
+            {
+              "value": 12.0,
+              "count": 51
+            },
+            {
+              "value": 16.0,
+              "count": 51
+            },
+            {
+              "value": 24.0,
+              "count": 28
+            },
+            {
+              "value": 18.0,
+              "count": 20
+            },
+            {
+              "value": 8.0,
+              "count": 18
+            },
+            {
+              "value": 25.0,
+              "count": 13
+            },
+            {
+              "value": 14.0,
+              "count": 11
+            },
+            {
+              "value": 26.0,
+              "count": 6
+            },
+            {
+              "value": 6.0,
+              "count": 6
+            },
+            {
+              "value": 22.0,
+              "count": 5
+            },
+            {
+              "value": 30.0,
+              "count": 5
+            },
+            {
+              "value": 5.0,
+              "count": 5
+            },
+            {
+              "value": 28.0,
+              "count": 4
+            },
+            {
+              "value": 60.0,
+              "count": 3
+            },
+            {
+              "value": 32.0,
+              "count": 1
+            },
+            {
+              "value": 36.0,
+              "count": 1
+            },
+            {
+              "value": 40.0,
+              "count": 1
+            },
+            {
+              "value": 45.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_02": {
+          "distinct_value_count": 14,
+          "values": [
+            {
+              "value": 4.0,
+              "count": 238
+            },
+            {
+              "value": 3.0,
+              "count": 42
+            },
+            {
+              "value": 10.0,
+              "count": 29
+            },
+            {
+              "value": 6.0,
+              "count": 28
+            },
+            {
+              "value": 5.0,
+              "count": 26
+            },
+            {
+              "value": 2.0,
+              "count": 25
+            },
+            {
+              "value": 1.0,
+              "count": 8
+            },
+            {
+              "value": 0.4000000059604645,
+              "count": 7
+            },
+            {
+              "value": 1.399999976158142,
+              "count": 5
+            },
+            {
+              "value": 1.5,
+              "count": 3
+            },
+            {
+              "value": 1.600000023841858,
+              "count": 2
+            },
+            {
+              "value": 8.0,
+              "count": 2
+            },
+            {
+              "value": 1.7999999523162842,
+              "count": 1
+            },
+            {
+              "value": 2.200000047683716,
+              "count": 1
+            }
+          ]
+        },
+        "field_03": {
+          "distinct_value_count": 14,
+          "values": [
+            {
+              "value": 6.0,
+              "count": 260
+            },
+            {
+              "value": 8.0,
+              "count": 46
+            },
+            {
+              "value": 20.0,
+              "count": 29
+            },
+            {
+              "value": 4.0,
+              "count": 21
+            },
+            {
+              "value": 5.0,
+              "count": 18
+            },
+            {
+              "value": 7.0,
+              "count": 8
+            },
+            {
+              "value": 0.5,
+              "count": 7
+            },
+            {
+              "value": 1.2000000476837158,
+              "count": 7
+            },
+            {
+              "value": 3.0,
+              "count": 7
+            },
+            {
+              "value": 2.0,
+              "count": 5
+            },
+            {
+              "value": 1.5,
+              "count": 3
+            },
+            {
+              "value": 1.600000023841858,
+              "count": 2
+            },
+            {
+              "value": 12.0,
+              "count": 2
+            },
+            {
+              "value": 2.200000047683716,
+              "count": 2
+            }
+          ]
+        },
+        "field_04": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 406
+            },
+            {
+              "value": 0,
+              "count": 11
+            }
+          ]
+        },
+        "field_05": {
+          "distinct_value_count": 10,
+          "values": [
+            {
+              "value": 30.0,
+              "count": 180
+            },
+            {
+              "value": 40.0,
+              "count": 151
+            },
+            {
+              "value": 20.0,
+              "count": 29
+            },
+            {
+              "value": 50.0,
+              "count": 17
+            },
+            {
+              "value": 25.0,
+              "count": 11
+            },
+            {
+              "value": 35.0,
+              "count": 10
+            },
+            {
+              "value": 15.0,
+              "count": 9
+            },
+            {
+              "value": 10.0,
+              "count": 7
+            },
+            {
+              "value": 70.0,
+              "count": 2
+            },
+            {
+              "value": 60.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_06": {
+          "distinct_value_count": 9,
+          "values": [
+            {
+              "value": 15.0,
+              "count": 154
+            },
+            {
+              "value": 25.0,
+              "count": 136
+            },
+            {
+              "value": 20.0,
+              "count": 71
+            },
+            {
+              "value": 30.0,
+              "count": 28
+            },
+            {
+              "value": 10.0,
+              "count": 10
+            },
+            {
+              "value": 5.0,
+              "count": 7
+            },
+            {
+              "value": 35.0,
+              "count": 6
+            },
+            {
+              "value": 40.0,
+              "count": 3
+            },
+            {
+              "value": 50.0,
+              "count": 2
+            }
+          ]
+        },
+        "field_07": {
+          "distinct_value_count": 4,
+          "values": [
+            {
+              "value": 50.0,
+              "count": 403
+            },
+            {
+              "value": 20.0,
+              "count": 12
+            },
+            {
+              "value": 10.0,
+              "count": 1
+            },
+            {
+              "value": 40.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_08": {
+          "distinct_value_count": 6,
+          "values": [
+            {
+              "value": 1.0,
+              "count": 307
+            },
+            {
+              "value": 0.800000011920929,
+              "count": 46
+            },
+            {
+              "value": 0.6000000238418579,
+              "count": 26
+            },
+            {
+              "value": 0.8999999761581421,
+              "count": 20
+            },
+            {
+              "value": 0.699999988079071,
+              "count": 12
+            },
+            {
+              "value": 0.5,
+              "count": 6
+            }
+          ]
+        },
+        "field_09": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 246
+            },
+            {
+              "value": 0,
+              "count": 171
+            }
+          ]
+        },
+        "field_10": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 248
+            },
+            {
+              "value": 0,
+              "count": 169
+            }
+          ]
+        },
+        "field_11": {
+          "distinct_value_count": 11,
+          "values": [
+            {
+              "value": 0.4000000059604645,
+              "count": 102
+            },
+            {
+              "value": 0.20000000298023224,
+              "count": 96
+            },
+            {
+              "value": 0.5,
+              "count": 62
+            },
+            {
+              "value": 0.30000001192092896,
+              "count": 50
+            },
+            {
+              "value": 0.6000000238418579,
+              "count": 36
+            },
+            {
+              "value": 0.10000000149011612,
+              "count": 29
+            },
+            {
+              "value": 0.699999988079071,
+              "count": 14
+            },
+            {
+              "value": 0.800000011920929,
+              "count": 12
+            },
+            {
+              "value": 0.550000011920929,
+              "count": 10
+            },
+            {
+              "value": 0.0,
+              "count": 5
+            },
+            {
+              "value": 0.25,
+              "count": 1
+            }
+          ]
+        },
+        "field_12": {
+          "distinct_value_count": 11,
+          "values": [
+            {
+              "value": 0.800000011920929,
+              "count": 207
+            },
+            {
+              "value": 1.0,
+              "count": 74
+            },
+            {
+              "value": 0.4000000059604645,
+              "count": 38
+            },
+            {
+              "value": 0.6000000238418579,
+              "count": 26
+            },
+            {
+              "value": 0.8999999761581421,
+              "count": 21
+            },
+            {
+              "value": 0.5,
+              "count": 20
+            },
+            {
+              "value": 0.699999988079071,
+              "count": 16
+            },
+            {
+              "value": 0.75,
+              "count": 6
+            },
+            {
+              "value": 0.20000000298023224,
+              "count": 3
+            },
+            {
+              "value": 0.30000001192092896,
+              "count": 3
+            },
+            {
+              "value": 0.6499999761581421,
+              "count": 3
+            }
+          ]
+        },
+        "field_13": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 410
+            },
+            {
+              "value": 1,
+              "count": 7
+            }
+          ]
+        },
+        "field_14": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 403
+            },
+            {
+              "value": 0,
+              "count": 14
+            }
+          ]
+        },
+        "field_15": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 222
+            },
+            {
+              "value": 1,
+              "count": 195
+            }
+          ]
+        },
+        "field_16": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 391
+            },
+            {
+              "value": 1,
+              "count": 26
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p9",
+      "occurrence_count": 318,
+      "unique_value_count": 39,
+      "source_count": 32,
+      "entity_count": 80,
+      "value_lengths": {
+        "5": 318
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 1,
+          "values": [
+            {
+              "value": 4.0,
+              "count": 318
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 1,
+          "values": [
+            {
+              "value": 4.0,
+              "count": 318
+            }
+          ]
+        },
+        "field_02": {
+          "distinct_value_count": 9,
+          "values": [
+            {
+              "value": 12.0,
+              "count": 143
+            },
+            {
+              "value": 10.0,
+              "count": 93
+            },
+            {
+              "value": 8.0,
+              "count": 32
+            },
+            {
+              "value": 6.0,
+              "count": 30
+            },
+            {
+              "value": 16.0,
+              "count": 11
+            },
+            {
+              "value": 4.0,
+              "count": 4
+            },
+            {
+              "value": 14.0,
+              "count": 2
+            },
+            {
+              "value": 18.0,
+              "count": 2
+            },
+            {
+              "value": 20.0,
+              "count": 1
+            }
+          ]
+        },
+        "field_03": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 232
+            },
+            {
+              "value": 0,
+              "count": 86
+            }
+          ]
+        },
+        "field_04": {
+          "distinct_value_count": 10,
+          "values": [
+            {
+              "value": 0.20000000298023224,
+              "count": 122
+            },
+            {
+              "value": 0.4000000059604645,
+              "count": 75
+            },
+            {
+              "value": 0.5,
+              "count": 50
+            },
+            {
+              "value": 0.30000001192092896,
+              "count": 28
+            },
+            {
+              "value": 0.10000000149011612,
+              "count": 18
+            },
+            {
+              "value": 0.05000000074505806,
+              "count": 11
+            },
+            {
+              "value": 0.0,
+              "count": 8
+            },
+            {
+              "value": 0.699999988079071,
+              "count": 3
+            },
+            {
+              "value": 0.800000011920929,
+              "count": 2
+            },
+            {
+              "value": 0.6000000238418579,
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p10",
+      "occurrence_count": 405,
+      "unique_value_count": 59,
+      "source_count": 36,
+      "entity_count": 99,
+      "value_lengths": {
+        "2": 405
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 25,
+          "values": [
+            {
+              "value": 1.2000000476837158,
+              "count": 123
+            },
+            {
+              "value": 0.4000000059604645,
+              "count": 60
+            },
+            {
+              "value": 0.5,
+              "count": 34
+            },
+            {
+              "value": 0.800000011920929,
+              "count": 32
+            },
+            {
+              "value": 0.30000001192092896,
+              "count": 29
+            },
+            {
+              "value": 0.6000000238418579,
+              "count": 29
+            },
+            {
+              "value": 1.0,
+              "count": 19
+            },
+            {
+              "value": 0.20000000298023224,
+              "count": 13
+            },
+            {
+              "value": 0.699999988079071,
+              "count": 13
+            },
+            {
+              "value": 1.7999999523162842,
+              "count": 10
+            },
+            {
+              "value": 0.0,
+              "count": 8
+            },
+            {
+              "value": 1.399999976158142,
+              "count": 6
+            },
+            {
+              "value": 1.2999999523162842,
+              "count": 5
+            },
+            {
+              "value": 1.100000023841858,
+              "count": 3
+            },
+            {
+              "value": 1.600000023841858,
+              "count": 3
+            },
+            {
+              "value": 2.0,
+              "count": 3
+            },
+            {
+              "value": 2.200000047683716,
+              "count": 3
+            },
+            {
+              "value": 20.0,
+              "count": 3
+            },
+            {
+              "value": 1.899999976158142,
+              "count": 2
+            },
+            {
+              "value": 3.0,
+              "count": 2
+            },
+            {
+              "value": 0.10000000149011612,
+              "count": 1
+            },
+            {
+              "value": 0.8999999761581421,
+              "count": 1
+            },
+            {
+              "value": 1.5,
+              "count": 1
+            },
+            {
+              "value": 2.0999999046325684,
+              "count": 1
+            },
+            {
+              "value": 2.4000000953674316,
+              "count": 1
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 5,
+          "values": [
+            {
+              "value": 0,
+              "count": 329
+            },
+            {
+              "value": 2,
+              "count": 24
+            },
+            {
+              "value": 3,
+              "count": 24
+            },
+            {
+              "value": 1,
+              "count": 19
+            },
+            {
+              "value": 4,
+              "count": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p12",
+      "occurrence_count": 309,
+      "unique_value_count": 34,
+      "source_count": 36,
+      "entity_count": 70,
+      "value_lengths": {
+        "3": 309
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 20,
+          "values": [
+            {
+              "value": "notmech",
+              "count": 70
+            },
+            {
+              "value": "bushwacker",
+              "count": 42
+            },
+            {
+              "value": "owens",
+              "count": 27
+            },
+            {
+              "value": "shadowcat",
+              "count": 19
+            },
+            {
+              "value": "sunder",
+              "count": 17
+            },
+            {
+              "value": "firefly",
+              "count": 16
+            },
+            {
+              "value": "thor",
+              "count": 16
+            },
+            {
+              "value": "strider",
+              "count": 15
+            },
+            {
+              "value": "avatar",
+              "count": 14
+            },
+            {
+              "value": "orion",
+              "count": 14
+            },
+            {
+              "value": "madcat",
+              "count": 13
+            },
+            {
+              "value": "puma",
+              "count": 13
+            },
+            {
+              "value": "annihilator",
+              "count": 9
+            },
+            {
+              "value": "elemental",
+              "count": 6
+            },
+            {
+              "value": "champion",
+              "count": 5
+            },
+            {
+              "value": "supernova",
+              "count": 5
+            },
+            {
+              "value": "blackhawk",
+              "count": 2
+            },
+            {
+              "value": "cauldron",
+              "count": 2
+            },
+            {
+              "value": "daishi",
+              "count": 2
+            },
+            {
+              "value": "vulture",
+              "count": 2
+            }
+          ]
+        },
+        "field_01": {
+          "distinct_value_count": 1,
+          "values": [
+            {
+              "value": 0,
+              "count": 309
+            }
+          ]
+        },
+        "field_02": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 0,
+              "count": 191
+            },
+            {
+              "value": 1,
+              "count": 118
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "p13",
+      "occurrence_count": 201,
+      "unique_value_count": 2,
+      "source_count": 22,
+      "entity_count": 46,
+      "value_lengths": {
+        "1": 201
+      },
+      "positions": {
+        "field_00": {
+          "distinct_value_count": 2,
+          "values": [
+            {
+              "value": 1,
+              "count": 191
+            },
+            {
+              "value": 0,
+              "count": 10
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "key_combinations": [
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p9",
+        "p10",
+        "p12",
+        "p13"
+      ],
+      "count": 138
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p9",
+        "p10",
+        "p12"
+      ],
+      "count": 72
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8",
+        "p9",
+        "p10",
+        "p12",
+        "p13"
+      ],
+      "count": 41
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p10"
+      ],
+      "count": 30
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p9",
+        "p10"
+      ],
+      "count": 26
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8",
+        "p10"
+      ],
+      "count": 17
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8",
+        "p9",
+        "p10",
+        "p12"
+      ],
+      "count": 15
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8",
+        "p10",
+        "p12"
+      ],
+      "count": 13
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p9",
+        "p10",
+        "p13"
+      ],
+      "count": 12
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p10",
+        "p12"
+      ],
+      "count": 10
+    },
+    {
+      "keys": [
+        "params",
+        "p8",
+        "p10"
+      ],
+      "count": 7
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8"
+      ],
+      "count": 6
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p9",
+        "p12",
+        "p13"
+      ],
+      "count": 5
+    },
+    {
+      "keys": [
+        "p10",
+        "p12"
+      ],
+      "count": 4
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p10",
+        "p12",
+        "p13"
+      ],
+      "count": 4
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8",
+        "p9",
+        "p10"
+      ],
+      "count": 4
+    },
+    {
+      "keys": [
+        "params",
+        "p8",
+        "p10",
+        "p12"
+      ],
+      "count": 4
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p6",
+        "p8",
+        "p9"
+      ],
+      "count": 3
+    },
+    {
+      "keys": [
+        "params",
+        "p6",
+        "p8",
+        "p10"
+      ],
+      "count": 3
+    },
+    {
+      "keys": [
+        "params",
+        "p8",
+        "p9",
+        "p10"
+      ],
+      "count": 2
+    },
+    {
+      "keys": [
+        "p8",
+        "p10",
+        "p12"
+      ],
+      "count": 1
+    },
+    {
+      "keys": [
+        "params",
+        "p2",
+        "p8",
+        "p10",
+        "p12",
+        "p13"
+      ],
+      "count": 1
+    },
+    {
+      "keys": [
+        "params",
+        "p6",
+        "p8",
+        "p10",
+        "p12"
+      ],
+      "count": 1
+    },
+    {
+      "keys": [
+        "params",
+        "p6",
+        "p8"
+      ],
+      "count": 1
+    },
+    {
+      "keys": [
+        "params",
+        "p8"
+      ],
+      "count": 1
+    }
+  ]
+}

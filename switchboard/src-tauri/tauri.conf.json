@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MechWarrior 3 Valve Switchboard",
+  "version": "0.1.0",
+  "identifier": "tools.mech3.valve-switchboard",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1422",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MechWarrior 3 — Valve Switchboard",
+        "url": "index.html",
+        "width": 1220,
+        "height": 840,
+        "minWidth": 720,
+        "minHeight": 560,
+        "alwaysOnTop": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "nsis",
+    "icon": ["../../src-tauri/icons/icon.ico"]
+  }
+}

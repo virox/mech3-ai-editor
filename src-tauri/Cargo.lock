@@ -893,6 +893,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fxhash"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "gdk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1698,6 +1707,7 @@ name = "mech3-ai-editor"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "mech3ax-anim",
  "mech3ax-api-types",
  "mech3ax-archive",
  "mech3ax-common",
@@ -1707,6 +1717,43 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+]
+
+[[package]]
+name = "mech3ax-anim"
+version = "0.0.0"
+dependencies = [
+ "bytemuck",
+ "log",
+ "mech3ax-anim-events",
+ "mech3ax-anim-names",
+ "mech3ax-api-types",
+ "mech3ax-common",
+ "mech3ax-timestamp",
+ "mech3ax-types",
+]
+
+[[package]]
+name = "mech3ax-anim-events"
+version = "0.0.0"
+dependencies = [
+ "bytemuck",
+ "log",
+ "mech3ax-anim-names",
+ "mech3ax-api-types",
+ "mech3ax-common",
+ "mech3ax-types",
+]
+
+[[package]]
+name = "mech3ax-anim-names"
+version = "0.0.0"
+dependencies = [
+ "fxhash",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -2305,6 +2352,16 @@ name = "precomputed-hash"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
+
+[[package]]
+name = "prettyplease"
+version = "0.2.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.118",
+]
 
 [[package]]
 name = "proc-macro-crate"

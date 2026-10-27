@@ -20,3 +20,4 @@ mech3ax-reader = { path = "C:/Dev/mech3ax/crates/reader" }
 mech3ax-common = { path = "C:/Dev/mech3ax/crates/common" }
 mech3ax-archive = { path = "C:/Dev/mech3ax/crates/archive" }
 mech3ax-api-types = { path = "C:/Dev/mech3ax/crates/api-types" }
+mech3ax-anim = { path = "C:/Dev/mech3ax/crates/anim" }

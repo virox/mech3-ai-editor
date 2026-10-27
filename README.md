@@ -7,13 +7,28 @@ mission Reader data without flattening archive ownership.
 Implemented workspace modules:
 
 - **AI Vehicles** — recovered `aiv.zrd` fields, VList conditions/actions, and
-  source-key labels.
+  source-key labels. Packed `record[3]` team memberships are edited as Team-ID
+  lists; the legacy Friend/Foe/Other controls are shown separately as a
+  player-relative preview so they cannot be mistaken for stored enum values.
+  The Team panel also exposes the optional `lancemate` override as Auto, On, or
+  Off; Auto uses the game's native missing-tag default.
 - **Valve Logic** — ordered `valves.zrd` event/action pairs, including duplicate
   event names and a raw fallback for unknown action types.
+- **Behavior Graph** — a typed drag-and-drop view of producers, exact named
+  integer channels, aggregates/delays, and consumers across AIV, targets,
+  valves, networks, objectives, and multiplayer metadata. Graph edits compile
+  back to existing native records atomically; canvas positions stay local.
+- **Animations** — read-only node view of the campaign's compiled `anim.zbd`
+  (read with mech3ax). Starting from a definition, callers expand left and
+  callees right through `CALL_ANIMATION`, `STOP_ANIMATION`,
+  `INVALIDATE_ANIMATION`, `RESET_ANIMATION`, and activation prerequisites.
+  State-writing callbacks (42/43) are marked with the channel they set. The
+  mission's `start_single_player[_mN]` entry is focused on open.
 - **Networks & Regions** — `net_*.zrd` and `reg_*.zrd` node graphs, positions,
   links, special edges, optional tags, and region-cycle visualization.
 - **References** — cross-layer Valve/state, vehicle, and region references plus
-  structural diagnostics. Targets and objectives are available read-only.
+  structural diagnostics. Confirmed target and objective state records are
+  editable through Behavior Graph; their remaining schemas stay read-only.
 
 Base Readers start locked. Unlocking is explicit, and **Export changes** writes
 only modified archives below a separately chosen output directory while
@@ -21,23 +36,40 @@ preserving their original relative paths. Source game files are never
 overwritten by that workflow. A direct ZRD/JSON compatibility mode remains
 available through **Open file**.
 
+The mission overview can be collapsed with the arrow in its header; this choice
+is remembered locally. In the Networks & Regions map, use the mouse wheel or
+the `+`/`−` buttons to zoom, drag empty map space to pan, and use **Fit** to
+restore the complete graph view. Dragging a node still changes only its X/Z
+position.
+
 ## Research documentation
+
+This `README.md` is the top-level entry point for the project and the docs tree.
+Use [`docs/README.md`](docs/README.md) as the detailed file-by-file catalog once
+you know which area you need.
 
 - [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — implemented architecture
   and remaining phases.
-- [`docs/READER_RELATIONSHIPS.md`](docs/READER_RELATIONSHIPS.md) — layer and
-  reference relationships.
-- [`docs/VALVE_LOGIC.md`](docs/VALVE_LOGIC.md) — Valve/state model and action
-  shapes.
-- [`docs/AINET_AND_REGIONS.md`](docs/AINET_AND_REGIONS.md) — network/region
-  serialization model.
+- [`docs/README.md`](docs/README.md) — detailed catalog for the reorganized
+  `docs/` tree.
+- [`docs/editor-systems/reader-document-relationships.md`](docs/editor-systems/reader-document-relationships.md)
+  — layer and reference relationships.
+- [`docs/editor-systems/valve-and-state-logic.md`](docs/editor-systems/valve-and-state-logic.md)
+  — Valve/state model and action shapes.
+- [`docs/editor-systems/behavior-graph.md`](docs/editor-systems/behavior-graph.md)
+  — visual vocabulary, native compilation mapping, safety model, and evidence
+  limits for the Behavior Graph.
+- [`docs/editor-systems/ai-networks-and-regions.md`](docs/editor-systems/ai-networks-and-regions.md)
+  — network/region serialization model.
+- [`docs/aiv-research/README.md`](docs/aiv-research/README.md) — AIV/vlist
+  corpus, generated datasets, and reverse-engineering notes.
 - [`RESEARCH_GAPS.md`](RESEARCH_GAPS.md) — evidence rules and deliberately
   unresolved semantics.
 
 ## Development
 
 Requirements: Node 20+, Rust 1.88+, and the local mech3ax checkout at
-`C:/Dev/TerranMechworks/mech3ax`.
+`C:/Dev/mech3ax`.
 
 ```powershell
 npm install
@@ -57,3 +89,66 @@ cargo test
 
 The editor does not need the running game or debugger. Unknown values remain in
 their original JSON-shaped records and survive archive round trips.
+
+## Valve Switchboard companion
+
+The separate **MechWarrior 3 Valve Switchboard** attaches to a running mission
+and displays every valve in the live registry. It currently supports only the
+validated `Mech3.exe 1.2.22` executable profile. The game must run at the same
+Windows privilege level as the switchboard.
+
+```powershell
+cd switchboard
+npm run tauri:dev
+npm run tauri:build
+```
+
+It polls at 10 Hz, retries unstable registry reads, and highlights changed
+values. Direct writes start disabled. Enabling them exposes a per-valve
+32-bit integer editor; each request revalidates the game build, re-resolves a
+stable live valve, rejects stale values, and reads back the result.
+
+These are raw registry value writes. They do **not** inject code or call the
+game's internal valve-notification routine, so a listener that relies only on
+that notification may not react even though the valve value has changed.
+
+## Valve Switchboard developer build
+
+`switchboard-dev` is a separate research application and binary. It first
+loads a selected mission's global, campaign, and mission Reader layers, then
+joins their known producers and consumers to the live registry. Expanded cards
+show the Reader records and deduplicated native caller addresses observed by
+the optional Windows hardware-breakpoint trace. Native tracing is experimental,
+off by default, and limited to the validated `Mech3.exe 1.2.22` profile.
+
+```powershell
+cd switchboard-dev
+npm install
+npm run portable
+```
+
+Portable outputs are isolated under `release/switchboard-dev`; the stable
+viewer build script writes only to `release/switchboard`.
+
+## AI Vehicles layout developer
+
+The normal Reader Studio only renders the versioned AI layout in
+`src/ai-layout.json`; it does not include layout-editing UI. To launch the
+separate developer build:
+
+```powershell
+npm run layout:tauri:dev
+```
+
+The layout developer can create, rename, reorder, and delete tabs, ordinary
+groups, nested repeater groups, and fields. Fields can be dragged between
+groups or dropped on another tab, and the property inspector edits their
+descriptions, `aiv.zrd` bindings, control types, format types, widths, option
+sources, and reference sources. VList is represented as a configurable
+repeater; Team and Raw JSON are configurable field controls. **Live Reader
+preview** opens the normal Studio with the current valid draft.
+
+Use **Save repository JSON** to validate and overwrite `src/ai-layout.json`.
+The normal `npm run build` then bundles that layout. Invalid or incompatible
+bindings (for example, a Team control not linked to `record[3]`) are shown in
+the developer toolbar and cannot be saved or previewed.
