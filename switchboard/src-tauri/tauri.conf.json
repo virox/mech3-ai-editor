@@ -17,8 +17,7 @@
         "width": 1220,
         "height": 840,
         "minWidth": 720,
-        "minHeight": 560,
-        "alwaysOnTop": true
+        "minHeight": 560
       }
     ]
   },
