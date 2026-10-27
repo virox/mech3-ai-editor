@@ -280,7 +280,7 @@ node, and vice versa.
 |---|---|---|---|---|
 | `[enabled, valve, target?]` | `valve` | Tests whether `valve == target`. | Gate a route or node by state. | `enabled = 0` disables it. If target is omitted, the navigation code derives it from the outgoing-link index; specify a target explicitly whenever possible. |
 | `[[enabled, valve, target?], ...]` | `valveunion` | OR of enabled equality tests. | Allow a route after any alternate trigger. | Missing member target defaults to `1`; evaluation stops after the first true member. |
-| `[valve, value]` | `valve_assign` | Writes a valve. | Turn a navigation event into a valve event. | No leading enabled flag; timing on edge entry vs. completion is **unknown**. |
+| `[valve, value]` | `valve_assign` | Writes a valve. | Turn a navigation event into a valve event. | No leading enabled flag; an edge `valve_assign` runs at the `from` node when the unit departs on that link, after the node's own `valve` wait. |
 | `[vehicle]` | `gate` | Vehicle-qualified edge rule. | Associate an outgoing edge with a particular AI vehicle. | Not a state condition. |
 
 ### Complete observed network-tag inventory
@@ -305,7 +305,7 @@ one directed connection.
 | `scan_time` | `[enabled, number]` | Spatial and edge | Scan-related control with a leading enable flag. | Exact test/action is **unknown**. |
 | `speed` | `[enabled, number]` | Spatial and edge | Speed-related control with a leading enable flag. | Copy a proven node; numeric unit is not fully recovered. |
 | `valve` | `[enabled, valve, target?]` | Spatial and edge | Equality condition on a named valve. | Prefer an explicit target value. |
-| `valve_assign` | `[valve, value]` | Spatial and edge | Named-valve assignment. | No enable field; edge timing remains unknown. |
+| `valve_assign` | `[valve, value]` | Spatial and edge | Named-valve assignment. | No enable field; on an edge it fires on departure from the `from` node. |
 | `valveunion` | `[[enabled, channel, target?], ...]` | Spatial and edge | OR of enabled valve equality conditions. | Use for alternate state triggers. |
 | `wait_interval` | `[enabled, number]` | Spatial and edge | Interval-related navigation control with enable flag. | Copy known values; exact scheduling details are not fully recovered. |
 | `wait_time` | `[enabled, number]` | Spatial | Wait-related navigation control with enable flag. | Copy known values; exact scheduling details are not fully recovered. |
@@ -387,8 +387,9 @@ their behaviour has not been tested.
   the observed `1` in several action types, are not fully documented.
 - The exact outcome of combining multiple threshold/candidate flags in one
   VList row needs targeted runtime tests; use separate rows/aggregates instead.
-- `valve_assign` is confirmed as an assignment, but its exact edge timing and
-  the general multi-link route-selection algorithm remain unknown.
+- `valve_assign` on an edge fires on departure from the `from` node (after
+  that node's `valve` wait); the general multi-link route-selection algorithm
+  remains unknown.
 
 ## 7. What modders normally change
 
@@ -485,8 +486,8 @@ And a `valves.zrd` action can consume it, for example:
 ```
 
 Required companion data: `enemy_01` must be an AIV vehicle, and each alarm
-channel needs a real producer. The exact moment `valve_assign` fires on its
-edge is still unknown, so do not use it for frame-precise timing.
+channel needs a real producer. An edge `valve_assign` fires when the unit
+leaves the edge's `from` node, not when it reaches the `to` node.
 
 ### Example 3 — why connection order can matter
 

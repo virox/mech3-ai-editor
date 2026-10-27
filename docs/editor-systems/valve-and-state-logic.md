@@ -222,6 +222,29 @@ This is why the leading `1` in `[1,"truck_go"]` is not itself the desired
 state. It enables the condition. On a node with one outgoing link the omitted
 target happens to derive to `1`; with a different link count it need not.
 
+### When node and edge tags run
+
+The runtime node builder (`FUN_004bde20`) creates the move-to-node action and
+then, for every outgoing link `i` of that node, a separate departure action
+list (`main_action + 0x20 + i*4`). For each link it appends, in this order:
+
+1. the node's own tags (`FUN_004bd790` on the node record, with
+   `current_index = i`; this is where the derived `valve` target comes from);
+2. the tags of every edge record `[from, to]` whose `from` is this node and
+   whose `to` is link `i`'s target (`FUN_004bdd90` → `FUN_004bdd70` →
+   `FUN_004bd790` on the edge record).
+
+Inside `FUN_004bd790` the order is fixed: `speed`, `wait_interval`,
+`wait_time`, `valve`, `canleave`, scan tags, `jump`, `gate`, `valveunion`,
+`shunt`, `valve_assign` (`FUN_004cdc20`, vtable `0x5cc440`), `auxname`.
+
+So an edge `valve_assign` runs **at the `from` node, when the unit departs on
+that link**, after the `from` node's own `valve` wait has been satisfied, not
+on arrival at `to`. For c1m1, `destroy_truck_02 = 1` is written at node 09 as
+soon as `truck_go` releases the truck toward node 16. That the departure list
+executes strictly in order (a `valve` wait holding back later actions) is
+inferred from the builder; the action runner itself has not been traced.
+
 ### Actual c1m1 `net_01` chain
 
 The relevant records are:
@@ -428,7 +451,7 @@ few details should not be guessed in the editor:
 
 * the exact immediate-value semantics of the binary-recognized `update`
   action and the unobserved mission/animation actions;
-* whether a net `valve_assign` fires on edge entry or edge completion;
+* whether the per-link departure list is executed strictly in order (inferred from the builder; see "When node and edge tags run");
 * the generic outgoing-edge selection algorithm when several links are
   eligible (the serialized data alone does not prove round-robin behavior);
 * old dialog captions for the two VList region selector fields;

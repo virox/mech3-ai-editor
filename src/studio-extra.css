@@ -138,6 +138,12 @@ main.mission-collapsed {
   stroke: #c8b4ff;
 }
 
+.edge-badge.assign { fill: #5c4a1f; stroke: #e2b84f; }
+.edge-badge.condition { fill: #4a3a6e; stroke: #b49cf0; }
+.network-viewport text.node-tag { font-size: 10px; font-weight: 600; }
+.network-viewport text.node-tag.condition { fill: #c8b4ff; }
+.network-viewport text.node-tag.assign { fill: #f2c879; }
+
 .network-viewport g[role="button"].selected-edge .edge-badge {
   fill: #b6532f;
   stroke: #ffd1bd;
@@ -456,6 +462,7 @@ main.mission-collapsed {
 .behavior-canvas > svg.selecting { cursor: crosshair; }
 .behavior-edge { fill: none; stroke: #65818a; stroke-width: 2.2; vector-effect: non-scaling-stroke; opacity: .72; }
 .behavior-edge.draft-wire { stroke: #f08a60; stroke-dasharray: 7 5; pointer-events: none; }
+.behavior-edge.route { stroke: #8fb7a2; stroke-dasharray: 3 5; opacity: .85; }
 .behavior-edge + * { marker-fill: #65818a; }
 .selection-marquee { fill: #4ca7c326; stroke: #70bed4; stroke-width: 1.5; stroke-dasharray: 7 4; vector-effect: non-scaling-stroke; pointer-events: none; }
 
