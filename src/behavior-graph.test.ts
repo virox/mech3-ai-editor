@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeIsActive,nodeOutputLine,portsCompatible,translatePositions,visibleIds} from './behavior-graph';
+import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeIsActive,nodeOutputLine,portOffsetY,portsCompatible,translatePositions,visibleIds} from './behavior-graph';
 import type {ValveGraphHost,ValveGraphSnapshot} from './types';
 
 const graph:ValveGraphSnapshot={scopeKey:'m4',nodes:[
@@ -23,13 +23,13 @@ describe('behavior graph helpers',()=>{
     expect(lines).toEqual(['Ammo Threshold: 0.800','Health Threshold: 0.350','Enters: hangar','Exits: hangar']);
     expect(nodeOutputLine(vlist)).toBe('door_open = 1');
     expect(nodeIsActive(vlist)).toBe(false);
-    expect(nodeCardHeight(vlist)).toBe(148);
+    expect(nodeCardHeight(vlist)).toBe(166);
   });
   it('summarizes target health output and threshold',()=>{
     const health={...graph.nodes[0],kind:'target-health-producer',subtitle:'satdish',ports:[{...graph.nodes[0].ports[0],channel:'comcntr_hit',value:1}],nativeRecord:['comcntr_hit',1,35]};
     expect(nodeOutputLine(health)).toBe('comcntr_hit = 1');
     expect(nodeCardLines(health)).toEqual(['Health Threshold: 35.000']);
-    expect(nodeCardHeight(health)).toBe(106);
+    expect(nodeCardHeight(health)).toBe(124);
   });
   it('summarizes animation callback producers with their callers',()=>{
     const callback={...graph.nodes[0],kind:'animation-callback',label:'Animation callback',subtitle:'bramp / call_ramp',ports:[{...graph.nodes[0].ports[0],channel:'bramp',value:1}],properties:{callback:43,sequence:'effect_sequence',activation:'ON_CALL',executionRange:500,calledBy:['start_single_player_m1 (horizon)']},nativeRecord:['CALLBACK',['VALUE',[43]]]};
@@ -44,10 +44,26 @@ describe('behavior graph helpers',()=>{
     expect(nodeCardLines(consumer('valve-teleport',['go',['teleport',['atlas',[1,2,3],90,1]]]))).toEqual(['Vehicle: atlas','Position: 1.000, 2.000, 3.000','Yaw: 90.000','State: 1']);
     expect(nodeCardLines(consumer('net-condition',['valve',[1,'bramp']]))).toEqual(['Requires: bramp (target from link index)']);
     expect(nodeCardLines(consumer('net-union',['valveunion',[[1,'bramp',1],[0,'truck_explode',1],[1,'gate_open']]]))).toEqual(['Any of: bramp = 1','Any of: truck_explode = 1 · disabled','Any of: gate_open = 1 (default)']);
-    expect(nodeCardLines(consumer('net-assignment',['valve_assign',['destroy_truck_01',1]]))).toEqual(['Assigns: destroy_truck_01 = 1']);
+    expect(nodeCardLines(consumer('net-assignment',['valve_assign',['destroy_truck_01',1]]))).toEqual([]);
     expect(nodeCardLines(consumer('objective-observer',[]))).toEqual([]);
   });
+  it('gives every producer the same output row with its write port beside it',()=>{
+    const write={...graph.nodes[0].ports[0],direction:'write' as const,channel:'destroy_truck_01',value:1};
+    const read={...graph.nodes[0].ports[0],direction:'read' as const};
+    const assignment={...graph.nodes[1],kind:'net-assignment',ports:[write]};
+    expect(nodeOutputLine(assignment)).toBe('destroy_truck_01 = 1');
+    expect(nodeCardHeight(assignment)).toBe(122);
+    expect(nodeOutputLine({...assignment,ports:[write,{...write,channel:'other'}]})).toBe('destroy_truck_01 = 1 +1');
+    expect(nodeOutputLine({...assignment,ports:[read]})).toBe('');
+    const delay={...assignment,kind:'valve-delayupdate',ports:[read,write]};
+    expect([portOffsetY(delay,0),portOffsetY(delay,1)]).toEqual([54,77]);
+  });
   it('isolates a complete connected chain',()=>expect([...connectedIds(graph,'p')].sort()).toEqual(['c','channel::m4factbrg','p']));
+  it('continues an isolated chain across a network route edge',()=>{
+    const assignment={...graph.nodes[0],id:'assign',kind:'net-assignment',ports:[{...graph.nodes[0].ports[0],id:'assign-port',channel:'destroy_truck_01'}]};
+    const routed:ValveGraphSnapshot={...graph,nodes:[...graph.nodes,assignment],edges:[...graph.edges,{id:'r',from:'c',to:'assign',channel:'route node_08 → node_17',kind:'route'},{id:'w',from:'assign-port',to:'channel::destroy_truck_01',channel:'destroy_truck_01'}]};
+    expect([...connectedIds(routed,'p')].sort()).toEqual(['assign','c','channel::destroy_truck_01','channel::m4factbrg','p']);
+  });
   it('keeps connected base-layer consumers in mission scope',()=>expect(visibleIds(graph,{allLoaded:false,search:'',layers:new Set()}).has('c')).toBe(true));
   it('falls back to the loaded graph when an IA/MP mission has no mission nodes',()=>{
     const inherited=structuredClone(graph);

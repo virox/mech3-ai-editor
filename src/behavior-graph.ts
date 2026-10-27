@@ -62,7 +62,8 @@ function networkLines(node:ValveGraphNode):string[]{
   switch(node.kind){
     case'net-condition':return[`Requires: ${condition(value,' (target from link index)')}`];
     case'net-union':return value.map(member=>`Any of: ${condition(list(member),' = 1 (default)')}`);
-    case'net-assignment':return[`Assigns: ${text(value[0])} = ${text(value[1])}`];
+    // The assigned channel is the card's output row.
+    case'net-assignment':return[];
     default:return[];
   }
 }
@@ -100,15 +101,29 @@ export function nodeCardLines(node:ValveGraphNode):string[]{
   return lines;
 }
 
+/** Every producer shows what it writes on its own highlighted row below the subtitle. */
 export function nodeOutputLine(node:ValveGraphNode){
-  if(!hasDetailedCard(node))return '';
-  const port=node.ports.find(item=>item.direction==='write');
-  return port?`${port.channel}${port.value===undefined?'':` = ${port.value}`}`:'';
+  const writes=node.ports.filter(item=>item.direction==='write');
+  if(!writes.length)return '';
+  const port=writes[0];
+  return `${port.channel}${port.value===undefined?'':` = ${port.value}`}${writes.length>1?` +${writes.length-1}`:''}`;
+}
+
+export const OUTPUT_ROW_Y=82;
+const OUTPUT_ROW_HEIGHT=18;
+/** Vertical shift of everything below the output row. */
+export function nodeOutputOffset(node:ValveGraphNode){return nodeOutputLine(node)?OUTPUT_ROW_HEIGHT:0}
+
+/** Read ports stack from the label row; write ports start at the output row so the highlighted channel sits next to its port. */
+export function portOffsetY(node:ValveGraphNode,index:number){
+  const port=node.ports[index];
+  const sameDirection=node.ports.slice(0,index).filter(item=>item.direction===port.direction).length;
+  return (port.direction==='write'?OUTPUT_ROW_Y-5:54)+sameDirection*18;
 }
 
 export function nodeIsActive(node:ValveGraphNode){return node.kind==='vlist-producer'&&enabled(recordValue(node,14))}
 
-export function nodeCardHeight(node:ValveGraphNode){return hasDetailedCard(node)?Math.max(BLOCK_HEIGHT,92+nodeCardLines(node).length*14):BLOCK_HEIGHT}
+export function nodeCardHeight(node:ValveGraphNode){return (hasDetailedCard(node)?Math.max(BLOCK_HEIGHT,92+nodeCardLines(node).length*14):BLOCK_HEIGHT)+nodeOutputOffset(node)}
 
 export function cycleNodeIds(graph:ValveGraphSnapshot):Set<string>{
   const links=new Map<string,string[]>();

@@ -79,6 +79,10 @@ pub(crate) struct ValveGraphEdge {
     pub from: String,
     pub to: String,
     pub channel: String,
+    /// `None` for channel edges. `"route"` links a network gate to an assignment on a
+    /// link leaving that node; it is derived from topology and never compiled back.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -154,6 +158,7 @@ struct Builder<'a> {
     nodes: Vec<ValveGraphNode>,
     hosts: Vec<ValveGraphHost>,
     diagnostics: Vec<ValveGraphDiagnostic>,
+    route_edges: Vec<ValveGraphEdge>,
     order: usize,
 }
 
@@ -811,6 +816,10 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
     let Some((list, root_path)) = pair_list_with_path(&document.root) else {
         return;
     };
+    // Gate blocks (valve / valveunion) by the network node or link that hosts them,
+    // and assignments by the link they sit on, for the derived route edges below.
+    let mut gates: Vec<(NetworkSite, String, String)> = Vec::new();
+    let mut assignments: Vec<(NetworkSite, String, String)> = Vec::new();
     for pair_index in (0..list.len().saturating_sub(1)).step_by(2) {
         let Some(node_key) = list[pair_index].as_str() else {
             continue;
@@ -824,6 +833,7 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
         let record_path = [root_path.as_slice(), &[pair_index + 1]].concat();
         let spatial = record.first().is_some_and(Value::is_number)
             && record.get(1).is_some_and(Value::is_array);
+        let site = network_site(node_key, record);
         builder.add_host(
             document,
             "network-tags",
@@ -924,6 +934,10 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
                     Some(document.id.clone()),
                 )
             }
+            if let Some(site) = site {
+                let entry = (site, node_id.clone(), node_key.to_owned());
+                if kind == "net-assignment" { assignments.push(entry) } else { gates.push(entry) }
+            }
             builder.add_node(ValveGraphNode {
                 id: node_id,
                 kind: kind.into(),
@@ -950,6 +964,41 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
             tag_index += 2;
         }
     }
+    for (site, assignment_id, assignment_key) in &assignments {
+        let NetworkSite::Link(from, to) = *site else {
+            continue;
+        };
+        for (gate_site, gate_id, gate_key) in &gates {
+            // A unit only takes the link from..to once the gate on `from` (or on the
+            // link itself) lets it pass.
+            if *gate_site == NetworkSite::Node(from) || *gate_site == NetworkSite::Link(from, to) {
+                builder.route_edges.push(ValveGraphEdge {
+                    id: format!("route::{gate_id}::{assignment_id}"),
+                    from: gate_id.clone(),
+                    to: assignment_id.clone(),
+                    channel: format!("route {gate_key} → {assignment_key} (link {from}→{to})"),
+                    kind: Some("route".into()),
+                });
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum NetworkSite {
+    Node(u64),
+    Link(u64, u64),
+}
+
+/// `node_NN` records are network nodes; records that start with `[from, to]` are links.
+fn network_site(node_key: &str, record: &[Value]) -> Option<NetworkSite> {
+    if let Some(pair) = record.first().and_then(Value::as_array) {
+        return match (pair.first().and_then(Value::as_u64), pair.get(1).and_then(Value::as_u64), pair.len()) {
+            (Some(from), Some(to), 2) => Some(NetworkSite::Link(from, to)),
+            _ => None,
+        };
+    }
+    node_key.strip_prefix("node_")?.parse().ok().map(NetworkSite::Node)
 }
 
 fn mission_key(selected_mission: &str) -> String {
@@ -1549,7 +1598,7 @@ fn channel_id(name: &str) -> String {
 
 fn finish_graph(mut builder: Builder<'_>, scope_key: String) -> ValveGraphSnapshot {
     let mut channel_map: BTreeMap<String, (usize, usize, BTreeSet<String>)> = BTreeMap::new();
-    let mut edges = Vec::new();
+    let mut edges = std::mem::take(&mut builder.route_edges);
     for node in &builder.nodes {
         for graph_port in &node.ports {
             if graph_port.channel.is_empty() {
@@ -1572,6 +1621,7 @@ fn finish_graph(mut builder: Builder<'_>, scope_key: String) -> ValveGraphSnapsh
                     from: graph_port.id.clone(),
                     to: channel,
                     channel: graph_port.channel.clone(),
+                    kind: None,
                 });
             } else {
                 entry.1 += 1;
@@ -1580,6 +1630,7 @@ fn finish_graph(mut builder: Builder<'_>, scope_key: String) -> ValveGraphSnapsh
                     from: channel,
                     to: graph_port.id.clone(),
                     channel: graph_port.channel.clone(),
+                    kind: None,
                 });
             }
         }

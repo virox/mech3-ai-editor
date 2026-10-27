@@ -258,4 +258,23 @@ mod installed_game_tests {
             .any(|caller| caller.as_str().is_some_and(|text| text.starts_with("start_single_player_m1"))));
         assert!(snapshot.references.iter().any(|r| r.name == "bramp" && r.role == "writes-valve-animation"));
     }
+
+    #[test]
+    fn c1m1_truck_go_gate_routes_to_the_destroy_truck_assignments() {
+        let Ok(root_value) = std::env::var("MW3_TEST_ROOT") else { return };
+        let root = PathBuf::from(root_value);
+        let Some(snapshot) = installed_workspace(&root, root.join("zbd").join("c1").join("readerm1.zbd")) else { return };
+        let graph = &snapshot.valve_graph;
+        let node = |kind: &str, channel: &str| graph.nodes.iter()
+            .find(|node| node.kind == kind && node.ports.iter().any(|port| port.channel == channel) && node.subtitle.contains("node_08"))
+            .map(|node| node.id.clone());
+        let gate = node("net-condition", "truck_go").expect("net_01 node_08 truck_go gate");
+        let route = graph.edges.iter()
+            .find(|edge| edge.kind.as_deref() == Some("route") && edge.from == gate)
+            .expect("route edge from the node_08 gate");
+        let assignment = graph.nodes.iter().find(|node| node.id == route.to).unwrap();
+        assert_eq!(assignment.kind, "net-assignment");
+        assert_eq!(assignment.ports[0].channel, "destroy_truck_01");
+        assert!(route.channel.contains("link 8→15"));
+    }
 }

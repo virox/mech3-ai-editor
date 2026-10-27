@@ -48,7 +48,8 @@ export interface ValveGraphBinding { documentId:string; archiveRelativePath:stri
 export interface ValveGraphPortBinding { documentId:string; path:number[]; removeContainerPath?:number[]; removeStart?:number; removeWidth?:number; }
 export interface ValveGraphPort { id:string; label:string; direction:'read'|'write'; channel:string; value?:number; binding:ValveGraphPortBinding; }
 export interface ValveGraphNode { id:string; kind:string; category:'producer'|'logic'|'consumer'|'unknown'; label:string; subtitle:string; layer:string; locked:boolean; order:number; binding:ValveGraphBinding; ports:ValveGraphPort[]; properties:Record<string,Json>; nativeRecord:Json; }
-export interface ValveGraphEdge { id:string; from:string; to:string; channel:string; }
+/** `kind: 'route'` links a network gate to an assignment on a link leaving that node (topology, not a channel). */
+export interface ValveGraphEdge { id:string; from:string; to:string; channel:string; kind?:'route'; }
 export interface ValveGraphChannel { id:string; name:string; producerCount:number; consumerCount:number; layers:string[]; }
 export interface ValveGraphHost { id:string; kind:'valves-document'|'vehicle-vlist'|'target-health'|'network-tags'|'objective-list'; label:string; documentId:string; archiveRelativePath:string; entryName:string; layer:string; locked:boolean; path:number[]; properties:Record<string,Json>; }
 export interface ValveGraphDiagnostic { severity:'info'|'warning'|'error'; code:string; message:string; nodeId?:string; documentId?:string; }

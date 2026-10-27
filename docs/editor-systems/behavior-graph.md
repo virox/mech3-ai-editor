@@ -23,6 +23,14 @@ are metadata on blocks; none of them is silently converted into a channel.
 | Gray-striped rectangle | Unknown action. It is navigable and shown raw, but read-only. |
 | Left orange port | Channel read. |
 | Right green port | Channel write. |
+| Yellow `→ channel = value` row | What a block writes. Every block with a write port shows it, next to that port. |
+| Dashed green line | Network route: a `valve`/`valveunion` gate on node *N* (or on link *N→M*) leads to a `valve_assign` on link *N→M*. Derived from network topology, not a channel; read-only. |
+
+Route edges make `Isolate chain` follow a gate into the assignments it
+unlocks, e.g. C1M1 `truck_go` gate on `net_01` node 08 → `destroy_truck_01`
+assigned on link 8→15. The game builds the gate and the edge assignment into the same per-link
+departure list on node *N* (gate first), so the assignment fires when the
+unit leaves *N* on that link; see `valve-and-state-logic.md`.
 
 Blocks use deterministic serialized order within role columns. Existing
 derived-state cycles are placed in a separate lower lane and produce a warning.
