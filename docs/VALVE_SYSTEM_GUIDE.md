@@ -200,12 +200,12 @@ field:  state Ammo thr Fired Health thr Heat thr Enters region LOS range Dist ra
 |---:|---|---|---|---|
 | 0 | `Valve state to set` (`close`/`open`) | Integer; corpus `0`, `1` | Desired valve value written when the row fires. | `1`; safe when paired with a valid index 15 valve. |
 | 1 | `Condition Ammo Enabled` (`Ammo`) | Boolean integer | Enables the ammo-threshold test at index 2. | `0`; threshold scale is not fully labelled, so copy an existing row. |
-| 2 | `Ammo Threshold` | Float | Threshold used by the runtime ammo comparison. | Corpus `0.0..0.999...`; do not treat it as a raw ammo count without testing. |
-| 3 | `Condition Fired Upon` (`Fired on`) | Boolean integer | Enables a runtime fired-on test. | Only `0` occurs in the supplied corpus; changing it is experimental. |
+| 2 | `Ammo Threshold` | Float | Row fires when the ammo value is **at or below** this threshold. | Corpus `0.0..0.999...`; do not treat it as a raw ammo count without testing. |
+| 3 | `Condition Fired Upon` (`Fired on`) | Boolean integer | Row fires when the owner reports being fired upon. | Only `0` occurs in the supplied corpus; changing it is experimental. |
 | 4 | `Condition Health Enabled` (`Health`) | Boolean integer | Enables the health-threshold test at index 5. | `0` or `1`; paired with index 5. |
-| 5 | `Health Threshold` | Float | Threshold used by the runtime health comparison. | Usually a fraction such as `0.10` or `0.999`; use an existing vehicle row as a template. |
+| 5 | `Health Threshold` | Float | Row fires when the vehicle's overall health fraction (1.0 = intact) is **at or below** this threshold; `0.0` means "destroyed". Live-verified in C1M1. | Usually a fraction such as `0.10` or `0.999`; use an existing vehicle row as a template. |
 | 6 | `Condition Heat Enabled` (`Heat`) | Boolean integer | Enables the heat-threshold test at index 7. | `0` or `1`; paired with index 7. |
-| 7 | `Heat Threshold` | Float | Threshold used by the runtime heat comparison. | Often `0.80`; scale is supported by data but has no user-facing unit proof. |
+| 7 | `Heat Threshold` | Float | Row fires when heat is **at or above** this threshold. | Often `0.80`; scale is supported by data but has no user-facing unit proof. |
 | 8 | `Condition Enters` (`Enters`) | Boolean integer | Selects the **inside** case for the region at index 9. | `0` or `1`; requires a valid region. |
 | 9 | `Region Name` | `0` or String | Name of a `reg_*.zrd` geometry record. | `"reg_mfb"`; changing it is safe only when that region is loaded. |
 | 10 | `Condition Target LOS Enabled` (`Target LOS`) | Boolean integer | Enables the candidate/line-of-sight distance test at index 11. | No enabled examples in supplied data; experimental. |
@@ -216,10 +216,19 @@ field:  state Ammo thr Fired Health thr Heat thr Enters region LOS range Dist ra
 | 15 | `Valve to set` (`Valve`) | String | Output valve name; resolved through the shared registry. | `"reach_mfb"`; required for a useful row and safest to change when all references are updated. |
 | 16 | `Condition Exits` (`Exits`) | Boolean integer | Selects the **outside** case for the region at index 9. | `0` or `1`; requires a valid region. |
 
+### How a row fires
+
+Ammo, Fired on, Health, Heat, Target Distance, and Target LOS are **OR-ed
+triggers**: any one that is enabled and satisfied writes the channel. Only
+when none of them fired does the region selector decide. A row with no
+enabled trigger and no region never fires. Nothing fires while the channel
+already holds the row's value. Source: `FUN_004d8e70`, see
+`aiv-research/vlist-runtime-semantics.md`.
+
 ### Region selector truth table
 
-When index 9 resolves to a region, the selector bits are confirmed to work as
-follows:
+When no trigger fired and index 9 resolves to a region, the selector bits are
+confirmed to work as follows:
 
 | Enters (8) | Exits (16) | Result |
 |---:|---:|---|
@@ -234,14 +243,14 @@ squares.
 
 ### How VList conditions combine
 
-Do not model one VList row as a simple `A AND B AND C` expression. The
-confirmed evaluator first skips rows whose output valve already has the
-requested state, then uses several independent trigger paths and a special
-region path. For the ordinary enabled Ammo, Health, Heat, and Fired-upon
-triggers, the trigger paths are alternatives: enabling Ammo and Health means
-the row can fire when **either** one crosses its test, not only when both do.
-The region selector is not a reliably general second `AND` gate for every
-ammo/health/heat/candidate flag combination.
+A VList row is an `OR`, never an `AND`. The evaluator first skips rows whose
+output valve already has the requested state. Then every enabled trigger
+(Fired on, Heat, Health, Ammo, Target Distance, Target LOS) is an
+alternative: enabling Ammo and Health means the row fires when **either** one
+is satisfied. The region selector is the last alternative, consulted only
+when no trigger fired; it does **not** restrict the triggers to the region.
+For example, Health `0.5` plus Enters `reg_x` fires at half health anywhere
+on the map, and also at full health inside `reg_x`.
 
 Practical rule: use one clear condition per VList row, or copy a proven
 combination from the same type of mission. If several independent conditions

@@ -787,7 +787,7 @@
                 {
                   "binding": "item[14]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Stored, but not read by the known evaluator.",
                   "format": "boolean",
                   "id": "vlist-14",
                   "label": "Condition Active",
@@ -797,7 +797,7 @@
                 {
                   "binding": "item[15]",
                   "control": "reference",
-                  "description": "",
+                  "description": "Channel written when the row fires. Nothing happens while it already holds the value.",
                   "format": "string",
                   "id": "vlist-15",
                   "label": "Valve to set",
@@ -817,7 +817,7 @@
                 {
                   "binding": "item[1]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Trigger. Fires when ammo is at or below the threshold. Triggers are alternatives: any one fires the row.",
                   "format": "boolean",
                   "id": "vlist-1",
                   "label": "Condition Ammo Enabled",
@@ -827,7 +827,7 @@
                 {
                   "binding": "item[2]",
                   "control": "number",
-                  "description": "",
+                  "description": "Fires at or below this value (fraction, 0..1).",
                   "format": "decimal",
                   "id": "vlist-2",
                   "label": "Ammo Threshold",
@@ -837,7 +837,7 @@
                 {
                   "binding": "item[3]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Trigger. Fires when this vehicle is fired upon.",
                   "format": "boolean",
                   "id": "vlist-3",
                   "label": "Condition Fired Upon",
@@ -847,7 +847,7 @@
                 {
                   "binding": "item[4]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Trigger. Fires when overall health is at or below the threshold.",
                   "format": "boolean",
                   "id": "vlist-4",
                   "label": "Condition Health Enabled",
@@ -857,7 +857,7 @@
                 {
                   "binding": "item[5]",
                   "control": "number",
-                  "description": "",
+                  "description": "Health fraction, 1.0 = intact. Fires at or below this value; 0.0 = destroyed.",
                   "format": "decimal",
                   "id": "vlist-5",
                   "label": "Health Threshold",
@@ -867,7 +867,7 @@
                 {
                   "binding": "item[6]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Trigger. Fires when heat is at or above the threshold.",
                   "format": "boolean",
                   "id": "vlist-6",
                   "label": "Condition Heat Enabled",
@@ -877,7 +877,7 @@
                 {
                   "binding": "item[7]",
                   "control": "number",
-                  "description": "",
+                  "description": "Fires at or above this value.",
                   "format": "decimal",
                   "id": "vlist-7",
                   "label": "Heat Threshold",
@@ -896,7 +896,7 @@
                 {
                   "binding": "item[8]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Fallback when no trigger fired: fires while inside the region.",
                   "format": "boolean",
                   "id": "vlist-8",
                   "label": "Condition Enters",
@@ -906,7 +906,7 @@
                 {
                   "binding": "item[16]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Fallback when no trigger fired: fires while outside the region.",
                   "format": "boolean",
                   "id": "vlist-16",
                   "label": "Condition Exits",
@@ -916,7 +916,7 @@
                 {
                   "binding": "item[9]",
                   "control": "reference",
-                  "description": "",
+                  "description": "Region for Enters/Exits. Without a region the selector never fires. It does not restrict the triggers.",
                   "format": "string",
                   "id": "vlist-9",
                   "label": "Region Name",
@@ -936,7 +936,7 @@
                 {
                   "binding": "item[10]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Trigger. Fires when the nearest target is within range and visible.",
                   "format": "boolean",
                   "id": "vlist-10",
                   "label": "Condition Target LOS Enabled",
@@ -956,7 +956,7 @@
                 {
                   "binding": "item[12]",
                   "control": "checkbox",
-                  "description": "",
+                  "description": "Trigger. Fires when the nearest target is within range.",
                   "format": "boolean",
                   "id": "vlist-12",
                   "label": "Condition Target Distance Enabled",

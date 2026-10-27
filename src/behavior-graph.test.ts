@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeIsActive,nodeOutputLine,portOffsetY,portsCompatible,translatePositions,visibleIds} from './behavior-graph';
-import type {ValveGraphHost,ValveGraphSnapshot} from './types';
+import type {Json,ValveGraphHost,ValveGraphSnapshot} from './types';
 
 const graph:ValveGraphSnapshot={scopeKey:'m4',nodes:[
   {id:'p',kind:'target-health-producer',category:'producer',label:'Bridge',subtitle:'',layer:'mission',locked:false,order:2,binding:{documentId:'t',archiveRelativePath:'r',entryName:'targets.zrd',recordKind:'health-below',locator:'x',containerPath:[],start:0,width:3,mode:'slice'},ports:[{id:'pp',label:'Writes',direction:'write',channel:'m4factbrg',value:1,binding:{documentId:'t',path:[0]}}],properties:{},nativeRecord:[]},
@@ -20,10 +20,17 @@ describe('behavior graph helpers',()=>{
   it('summarizes VList triggers and grows the card for multiple conditions',()=>{
     const vlist={...graph.nodes[0],kind:'vlist-producer',label:'AI / region condition',subtitle:'atlas',ports:[{...graph.nodes[0].ports[0],channel:'door_open',value:1}],nativeRecord:[1,1,.8,0,1,.35,0,.8,1,'hangar',0,0,0,60,0,'door_open',1]};
     const lines=nodeCardLines(vlist);
-    expect(lines).toEqual(['Ammo Threshold: 0.800','Health Threshold: 0.350','Enters: hangar','Exits: hangar']);
+    expect(lines).toEqual(['Health ≤ 0.350','or Ammo ≤ 0.800','or Always (enters + exits hangar)']);
     expect(nodeOutputLine(vlist)).toBe('door_open = 1');
     expect(nodeIsActive(vlist)).toBe(false);
-    expect(nodeCardHeight(vlist)).toBe(166);
+    expect(nodeCardHeight(vlist)).toBe(152);
+  });
+  it('labels C1M1 Owens rows and rows that can never fire',()=>{
+    const row=(record:Json[])=>nodeCardLines({...graph.nodes[0],kind:'vlist-producer',nativeRecord:record});
+    expect(row([1,0,.25,0,1,0,0,.8,0,0,0,0,0,60,1,'firefly_02_go',0])).toEqual(['Health ≤ 0.000']);
+    expect(row([1,0,.25,0,0,.999,0,.8,1,'reg_firefly_retreat',0,0,0,60,1,'firefly_retreat',0])).toEqual(['Inside reg_firefly_retreat']);
+    expect(row([1,0,.25,0,0,.999,0,.8,1,0,0,0,0,60,1,'firefly_02_go',0])).toEqual(['Never fires: region selector without region']);
+    expect(row([1,0,.25,0,0,.999,0,.8,0,'reg_x',0,0,0,60,1,'x',0])).toEqual(['Never fires: no trigger or region']);
   });
   it('summarizes target health output and threshold',()=>{
     const health={...graph.nodes[0],kind:'target-health-producer',subtitle:'satdish',ports:[{...graph.nodes[0].ports[0],channel:'comcntr_hit',value:1}],nativeRecord:['comcntr_hit',1,35]};

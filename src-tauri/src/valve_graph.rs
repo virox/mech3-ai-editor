@@ -338,6 +338,16 @@ fn scalar(value: Option<&Value>) -> String {
     }
 }
 
+/// `FUN_004d8e70`: Fired on (3), Heat (6), Health (4), Ammo (1), Target Distance (12)
+/// and Target LOS (10) are alternative triggers; the region selector (8/16 with region 9)
+/// is consulted only when none fired. Without either, the row never writes.
+fn vlist_row_can_fire(row: &[Value]) -> bool {
+    let flag = |index: usize| integer(row.get(index)).is_some_and(|value| value != 0)
+        || row.get(index).and_then(Value::as_bool) == Some(true);
+    let region = row.get(9).and_then(Value::as_str).is_some_and(|name| !name.is_empty());
+    [1, 3, 4, 6, 10, 12].into_iter().any(flag) || (region && (flag(8) || flag(16)))
+}
+
 fn integer(value: Option<&Value>) -> Option<i64> {
     value.and_then(|value| {
         value.as_i64().or_else(|| {
@@ -673,6 +683,18 @@ fn collect_aiv(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
                     Some(node_id.clone()),
                     Some(document.id.clone()),
                 )
+            }
+            if row.len() == 17 && !vlist_row_can_fire(row) {
+                builder.diagnostic(
+                    "warning",
+                    "vlist-never-fires",
+                    format!(
+                        "{vehicle} VList row {} has no enabled trigger and no usable region selector, so it never writes its channel",
+                        row_index + 1
+                    ),
+                    Some(node_id.clone()),
+                    Some(document.id.clone()),
+                );
             }
             let channel = scalar(row.get(15));
             let state = integer(row.first());
@@ -2639,6 +2661,19 @@ mod tests {
             diagnostics: vec![],
             valve_graph: ValveGraphSnapshot::default(),
         }
+    }
+
+    #[test]
+    fn vlist_rows_without_trigger_or_region_never_fire() {
+        let row = |value: Value| value.as_array().unwrap().clone();
+        // c1m1 owens_01: Health <= 0.0 -> firefly_02_go (live-verified to fire on death).
+        assert!(vlist_row_can_fire(&row(json!([1,0,0.25,0,1,0.0,0,0.8,0,0,0,0.0,0,60.0,1,"firefly_02_go",0]))));
+        // c1m1 player: Enters reg_firefly_retreat.
+        assert!(vlist_row_can_fire(&row(json!([1,0,0.25,0,0,0.999,0,0.8,1,"reg_firefly_retreat",0,0.0,0,60.0,1,"firefly_retreat",0]))));
+        // c1m1 player: Enters bit without a region (live-verified never to fire).
+        assert!(!vlist_row_can_fire(&row(json!([1,0,0.25,0,0,0.999,0,0.8,1,0,0,0.0,0,60.0,1,"firefly_02_go",0]))));
+        // Region present but neither selector bit.
+        assert!(!vlist_row_can_fire(&row(json!([1,0,0.25,0,0,0.999,0,0.8,0,"reg_x",0,0.0,0,60.0,1,"x",0]))));
     }
 
     #[test]

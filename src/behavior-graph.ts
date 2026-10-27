@@ -87,18 +87,26 @@ export function nodeCardLines(node:ValveGraphNode):string[]{
     return [`Health Threshold: ${decimal(threshold)}`];
   }
   if(node.kind!=='vlist-producer')return [];
+  return vlistTriggerLines(node);
+}
+
+/** VList triggers are alternatives (FUN_004d8e70): any satisfied trigger fires; the region is only consulted when none did. */
+function vlistTriggerLines(node:ValveGraphNode){
   const lines:string[]=[];
   const region=recordValue(node,9);
-  if(enabled(recordValue(node,1)))lines.push(`Ammo Threshold: ${decimal(recordValue(node,2))}`);
+  const hasRegion=typeof region==='string'&&region.length>0;
   if(enabled(recordValue(node,3)))lines.push('Fired Upon');
-  if(enabled(recordValue(node,4)))lines.push(`Health Threshold: ${decimal(recordValue(node,5))}`);
-  if(enabled(recordValue(node,6)))lines.push(`Heat Threshold: ${decimal(recordValue(node,7))}`);
-  if(enabled(recordValue(node,8)))lines.push(`Enters: ${String(region??'region')}`);
-  if(enabled(recordValue(node,10)))lines.push(`Target LOS Range: ${decimal(recordValue(node,11))}`);
-  if(enabled(recordValue(node,12)))lines.push(`Target Distance: ${decimal(recordValue(node,13))}`);
-  if(enabled(recordValue(node,16)))lines.push(`Exits: ${String(region??'region')}`);
-  if(!lines.length)lines.push('No trigger conditions');
-  return lines;
+  if(enabled(recordValue(node,6)))lines.push(`Heat ≥ ${decimal(recordValue(node,7))}`);
+  if(enabled(recordValue(node,4)))lines.push(`Health ≤ ${decimal(recordValue(node,5))}`);
+  if(enabled(recordValue(node,1)))lines.push(`Ammo ≤ ${decimal(recordValue(node,2))}`);
+  if(enabled(recordValue(node,12)))lines.push(`Target within ${decimal(recordValue(node,13))}`);
+  if(enabled(recordValue(node,10)))lines.push(`Target visible within ${decimal(recordValue(node,11))}`);
+  const enters=enabled(recordValue(node,8)),exits=enabled(recordValue(node,16));
+  if(hasRegion&&enters&&exits)lines.push(`Always (enters + exits ${region})`);
+  else if(hasRegion&&enters)lines.push(`Inside ${region}`);
+  else if(hasRegion&&exits)lines.push(`Outside ${region}`);
+  if(!lines.length)return [(enters||exits)&&!hasRegion?'Never fires: region selector without region':'Never fires: no trigger or region'];
+  return lines.map((line,index)=>index?`or ${line}`:line);
 }
 
 /** Every producer shows what it writes on its own highlighted row below the subtitle. */
