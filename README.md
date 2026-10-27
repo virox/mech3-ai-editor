@@ -112,6 +112,13 @@ These are raw registry value writes. They do **not** inject code or call the
 game's internal valve-notification routine, so a listener that relies only on
 that notification may not react even though the valve value has changed.
 
+The **Animations** tab reads the live animation-definition table (5 Hz,
+read-only). Each definition shows its `anim_state` (ready, running, executed,
+invalidated), running/total runtime instances, health, and for running
+definitions the raw per-sequence state and loop count. A transition log records
+state changes while the mission runs; `.flt` effect templates are hidden by
+default. Animations cannot be started or stopped from the switchboard.
+
 ## Valve Switchboard developer build
 
 `switchboard-dev` is a separate research application and binary. It first

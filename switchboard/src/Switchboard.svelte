@@ -2,16 +2,21 @@
   import { invoke } from '@tauri-apps/api/core';
   import { listen, type UnlistenFn } from '@tauri-apps/api/event';
   import { onMount, tick } from 'svelte';
+  import AnimationBoard, { type AnimationSnapshot } from './AnimationBoard.svelte';
 
   type Candidate = { pid:number; name:string; path?:string; compatible:boolean; detail:string };
   type Valve = { name:string; value:number; changedAt?:number };
   type Status = { state:string; pid?:number; build?:string; valveCount:number; writeEnabled:boolean; lastSnapshotMs?:number; message?:string };
-  type Snapshot = { status:Status; valves:Valve[] };
+  type Snapshot = { status:Status; valves:Valve[]; animations:AnimationSnapshot };
+  type View = 'valves'|'animations';
   type Filter = 'all'|'on'|'off'|'other';
 
   let candidates=$state<Candidate[]>([]);
   let status=$state<Status>({state:'disconnected',valveCount:0,writeEnabled:false,message:'Looking for a compatible Mech3.exe process…'});
   let valves=$state<Valve[]>([]);
+  const emptyAnimations=():AnimationSnapshot=>({revision:0,animations:[],events:[]});
+  let animations=$state<AnimationSnapshot>(emptyAnimations());
+  let view=$state<View>('valves');
   let search=$state('');
   let filter=$state<Filter>('all');
   let selectedPid=$state<number|undefined>();
@@ -45,6 +50,7 @@
       const snapshot=await invoke<Snapshot>('switchboard_snapshot');
       status=snapshot.status;
       valves=snapshot.valves;
+      if(snapshot.animations.revision!==animations.revision)animations=snapshot.animations;
       const next=await invoke<Candidate[]>('switchboard_candidates');
       candidates=next;
       if(status.state==='disconnected'&&!autoAttachPaused){
@@ -64,6 +70,7 @@
     try{
       status=await invoke<Status>('switchboard_detach');
       valves=[];
+      animations=emptyAnimations();
       hasAutoAttached=undefined;
       autoAttachPaused=true;
       showMessage('Detached. Automatic attach is paused; choose Attach to reconnect.',5000);
@@ -98,13 +105,16 @@
   }
 
   onMount(()=>{
-    let unlisten:UnlistenFn|undefined;
+    let unlisten:UnlistenFn|undefined,unlistenAnimations:UnlistenFn|undefined;
     void listen<Snapshot>('switchboard:snapshot',event=>{status=event.payload.status;valves=event.payload.valves;})
       .then(stop=>unlisten=stop)
       .catch(error=>showMessage(`Live event stream unavailable; using snapshot polling. ${String(error)}`,5000));
+    void listen<AnimationSnapshot>('switchboard:animations',event=>{animations=event.payload;})
+      .then(stop=>unlistenAnimations=stop)
+      .catch(()=>undefined);
     void refreshStatus();
     const timer=window.setInterval(()=>void refreshStatus(),1000);
-    return()=>{window.clearInterval(timer);if(messageTimer)clearTimeout(messageTimer);unlisten?.();};
+    return()=>{window.clearInterval(timer);if(messageTimer)clearTimeout(messageTimer);unlisten?.();unlistenAnimations?.();};
   });
 </script>
 
@@ -113,18 +123,22 @@
 <main>
   <header>
     <div class="brand"><span class="mark">V</span><div><small>MECHWARRIOR 3 · LIVE DEBUGGER</small><h1>Valve Switchboard</h1></div></div>
+    <nav class="view-tabs" aria-label="Switchboard view"><button class:active={view==='valves'} onclick={()=>view='valves'}>Valves<em>{status.valveCount}</em></button><button class:active={view==='animations'} onclick={()=>view='animations'}>Animations<em>{animations.animations.length}</em></button></nav>
     <div class:attached={status.state==='attached'} class="connection"><i></i><div><b>{status.state==='attached'?(status.writeEnabled?'Live monitor + direct writer':'Live monitor'):status.state==='waitingForRegistry'?'Waiting for mission registry':'Not attached'}</b><span>{status.pid?`PID ${status.pid} · ${status.build??'checking build'}`:'No game memory is being read'}</span></div></div>
   </header>
 
   <section class="status-bar">
-    <div><b>{status.valveCount}</b><span>live valves</span></div><div><b>{updated()}</b><span>last snapshot</span></div><div class="status-message">{message||status.message}</div>
-    {#if status.state!=='disconnected'}<label class="write-toggle"><input type="checkbox" checked={status.writeEnabled} onchange={event=>setWriteEnabled(event.currentTarget.checked)}/> Enable direct writes</label><button class="secondary" onclick={detach}>Detach</button>{/if}
+    {#if view==='animations'}<div><b>{animations.animations.length}</b><span>animation definitions</span></div><div><b>{animations.animations.filter(animation=>animation.state===2||animation.state===6).length}</b><span>running</span></div><div class="status-message">{message||animations.message||'Reading the live animation table (read-only).'}</div>
+    {:else}<div><b>{status.valveCount}</b><span>live valves</span></div><div><b>{updated()}</b><span>last snapshot</span></div><div class="status-message">{message||status.message}</div>{/if}
+    {#if status.state!=='disconnected'&&view==='animations'}<button class="secondary" onclick={detach}>Detach</button>{:else if status.state!=='disconnected'}<label class="write-toggle"><input type="checkbox" checked={status.writeEnabled} onchange={event=>setWriteEnabled(event.currentTarget.checked)}/> Enable direct writes</label><button class="secondary" onclick={detach}>Detach</button>{/if}
   </section>
 
   {#if status.state==='disconnected'&&candidates.length}
     <section class="candidates"><h2>Mech3.exe processes</h2><p>Only the verified 1.2.22 build can be opened. Monitoring uses query/read access; direct writes require the separate session control.</p>{#each candidates as candidate}<div class:unsupported={!candidate.compatible} class="candidate"><div><b>{candidate.name} · PID {candidate.pid}</b><span>{candidate.path??candidate.detail}</span><small>{candidate.detail}</small></div><button disabled={!candidate.compatible||attaching} onclick={()=>attach(candidate.pid)}>{attaching&&selectedPid===candidate.pid?'Attaching…':'Attach'}</button></div>{/each}</section>
   {:else if status.state==='disconnected'}
     <section class="empty"><div class="empty-led"></div><h2>Waiting for Mech3.exe</h2><p>Launch a supported game build. This companion will detect and attach to one compatible process automatically.</p></section>
+  {:else if view==='animations'}
+    <AnimationBoard snapshot={animations}/>
   {:else}
     <section class="controls"><input aria-label="Search valves" placeholder="Filter valve names…" bind:value={search}/><div class="filters">{#each [['all','All'],['on','On'],['off','Off'],['other','Other']] as item}<button class:active={filter===item[0]} onclick={()=>filter=item[0] as Filter}>{item[1]} <em>{count(item[0] as Filter)}</em></button>{/each}</div></section>
     {#if visible().length}

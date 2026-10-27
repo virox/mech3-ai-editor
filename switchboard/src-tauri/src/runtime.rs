@@ -1,8 +1,9 @@
 // Runtime valve-registry monitor and direct writer for the Switchboard app.
+use crate::animations::{self, AnimationState};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fs::File,
     io::Read,
     path::Path,
@@ -17,11 +18,16 @@ use tauri::{AppHandle, Emitter};
 
 const EXPECTED_BUILD: &str = "Mech3.exe 1.2.22";
 const EXPECTED_SHA256: &str = "95bc2c114c9b2e5c5ada8e40ca78cc79470f862e45313ffad0d1e8e6d4d916bf";
-const IMAGE_BASE: u64 = 0x0040_0000;
+pub(crate) const IMAGE_BASE: u64 = 0x0040_0000;
 const VALVE_LIST_HEAD_RVA: u64 = 0x0060_b504 - IMAGE_BASE;
 const VALVE_LIST_COUNT_RVA: u64 = 0x0060_b508 - IMAGE_BASE;
 const MAX_VALVES: usize = 32_768;
 const MAX_VALVE_NAME_BYTES: usize = 128;
+const MAX_ANIMATION_EVENTS: usize = 250;
+/// The animation table is read every second worker tick (5 Hz).
+const ANIMATION_POLL_TICKS: u64 = 2;
+/// Timer and loop-count updates without a state transition are sent at most this often.
+const ANIMATION_QUIET_EMIT_MS: u64 = 1000;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -58,6 +64,33 @@ pub struct MonitorStatus {
     pub message: Option<String>,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnimationTransition {
+    pub at: u64,
+    pub index: u32,
+    pub anim_name: String,
+    pub name: String,
+    pub from_state: u8,
+    pub to_state: u8,
+    pub running_instances: u32,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnimationSnapshot {
+    pub revision: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_read_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    pub animations: Vec<AnimationState>,
+    /// Newest first.
+    pub events: VecDeque<AnimationTransition>,
+    #[serde(skip)]
+    last_emit_ms: u64,
+}
+
 impl Default for MonitorStatus {
     fn default() -> Self {
         Self {
@@ -77,6 +110,7 @@ impl Default for MonitorStatus {
 pub struct SwitchboardSnapshot {
     pub status: MonitorStatus,
     pub valves: Vec<ValveState>,
+    pub animations: AnimationSnapshot,
 }
 
 #[derive(Clone, Debug)]
@@ -91,6 +125,7 @@ struct MonitorInner {
     valves: Vec<ValveState>,
     previous_values: HashMap<String, i32>,
     initialized: bool,
+    animations: AnimationSnapshot,
 }
 
 pub struct RuntimeMonitor {
@@ -138,6 +173,7 @@ impl RuntimeMonitor {
         inner.valves.clear();
         inner.previous_values.clear();
         inner.initialized = false;
+        inner.animations = AnimationSnapshot::default();
         inner.status.clone()
     }
 
@@ -196,6 +232,7 @@ impl RuntimeMonitor {
             inner.valves.clear();
             inner.previous_values.clear();
             inner.initialized = false;
+            inner.animations = AnimationSnapshot::default();
         }
         self.start_worker(pid, module.base_address, generation, app);
         Ok(self.status())
@@ -205,7 +242,15 @@ impl RuntimeMonitor {
         let inner = Arc::clone(&self.inner);
         let counter = Arc::clone(&self.generation);
         thread::spawn(move || {
+            let mut tick = 0_u64;
             while counter.load(Ordering::SeqCst) == generation {
+                if tick % ANIMATION_POLL_TICKS == 0 {
+                    let result = read_live_animations(pid, module_base);
+                    if let Some(snapshot) = update_animations(&inner, result) {
+                        let _ = app.emit("switchboard:animations", snapshot);
+                    }
+                }
+                tick += 1;
                 match read_live_valves(pid, module_base) {
                     Ok(values) => {
                         let snapshot = update_snapshot(&inner, pid, values);
@@ -226,6 +271,8 @@ impl RuntimeMonitor {
                             state.valves.clear();
                             state.previous_values.clear();
                             state.initialized = false;
+                            state.animations = AnimationSnapshot::default();
+                            let _ = app.emit("switchboard:animations", state.animations.clone());
                             break;
                         }
                         state.status.state = "waitingForRegistry".into();
@@ -268,7 +315,66 @@ fn update_snapshot(inner: &Arc<Mutex<MonitorInner>>, pid: u32, values: Vec<(Stri
     SwitchboardSnapshot {
         status: state.status.clone(),
         valves,
+        // Animations travel on their own event so the 10 Hz valve stream stays small.
+        animations: AnimationSnapshot::default(),
     }
+}
+
+/// Stores a fresh animation read and returns the snapshot to emit when anything visible changed.
+fn update_animations(inner: &Arc<Mutex<MonitorInner>>, result: Result<Vec<AnimationState>, String>) -> Option<AnimationSnapshot> {
+    let now = epoch_ms();
+    let mut state = inner.lock().unwrap();
+    let current = &mut state.animations;
+    let mut next = match result {
+        Ok(next) => next,
+        Err(error) => {
+            if current.message.as_deref() == Some(error.as_str()) {
+                return None;
+            }
+            current.message = Some(error);
+            current.revision += 1;
+            return Some(current.clone());
+        }
+    };
+    // A table with different records (another mission) restarts the log instead of reporting every record.
+    let same_table = current.animations.len() == next.len()
+        && current.animations.iter().zip(&next).all(|(old, new)| old.index == new.index && old.anim_name == new.anim_name);
+    let mut events = Vec::new();
+    if same_table {
+        for (old, animation) in current.animations.iter().zip(&mut next) {
+            if old.transition_key() != animation.transition_key() {
+                animation.changed_at = Some(now);
+                events.push(AnimationTransition {
+                    at: now,
+                    index: animation.index,
+                    anim_name: animation.anim_name.clone(),
+                    name: animation.name.clone(),
+                    from_state: old.state,
+                    to_state: animation.state,
+                    running_instances: animation.running_instances,
+                });
+            } else {
+                animation.changed_at = old.changed_at;
+            }
+        }
+        let quiet = events.is_empty() && current.message.is_none();
+        if quiet && (current.animations == next || now.saturating_sub(current.last_emit_ms) < ANIMATION_QUIET_EMIT_MS) {
+            current.last_read_ms = Some(now);
+            return None;
+        }
+        for event in events {
+            current.events.push_front(event);
+        }
+        current.events.truncate(MAX_ANIMATION_EVENTS);
+    } else {
+        current.events.clear();
+    }
+    current.animations = next;
+    current.message = None;
+    current.last_read_ms = Some(now);
+    current.last_emit_ms = now;
+    current.revision += 1;
+    Some(current.clone())
 }
 
 fn epoch_ms() -> u64 {
@@ -295,6 +401,7 @@ pub fn snapshot(monitor: &RuntimeMonitor) -> SwitchboardSnapshot {
     SwitchboardSnapshot {
         status: state.status.clone(),
         valves: state.valves.clone(),
+        animations: state.animations.clone(),
     }
 }
 
@@ -339,7 +446,7 @@ fn sha256_file(path: &Path) -> Result<String, String> {
     Ok(format!("{:x}", hash.finalize()))
 }
 
-trait MemoryReader {
+pub(crate) trait MemoryReader {
     fn read_bytes(&self, address: u64, length: usize) -> Result<Vec<u8>, String>;
 }
 
@@ -365,6 +472,11 @@ fn registry_layout(module_base: u64) -> RegistryLayout {
         list_head_pointer: module_base + VALVE_LIST_HEAD_RVA,
         count_pointer: module_base + VALVE_LIST_COUNT_RVA,
     }
+}
+
+fn read_live_animations(pid: u32, module_base: u64) -> Result<Vec<AnimationState>, String> {
+    let memory = ProcessMemory::open(pid)?;
+    animations::read_animation_table(&memory, module_base)
 }
 
 fn read_live_valves(pid: u32, module_base: u64) -> Result<Vec<(String, i32)>, String> {
@@ -440,14 +552,14 @@ fn enumerate_registry_entries<M: MemoryReader>(memory: &M, layout: RegistryLayou
     Ok(valves)
 }
 
-fn validate_pointer(pointer: u64, label: &str) -> Result<(), String> {
+pub(crate) fn validate_pointer(pointer: u64, label: &str) -> Result<(), String> {
     if !(0x0001_0000..0x8000_0000).contains(&pointer) {
         return Err(format!("Invalid {label} pointer 0x{pointer:08x}."));
     }
     Ok(())
 }
 
-fn read_pointer<M: MemoryReader>(memory: &M, address: u64) -> Result<u64, String> {
+pub(crate) fn read_pointer<M: MemoryReader>(memory: &M, address: u64) -> Result<u64, String> {
     Ok(read_u32(memory, address)? as u64)
 }
 
@@ -757,6 +869,34 @@ mod tests {
         let valves = read_live_valves(candidate.pid, module.base_address).unwrap();
         assert!(!valves.is_empty(), "the mission valve registry was empty");
         eprintln!("Read {} live valves from PID {}: {:?}", valves.len(), candidate.pid, valves.iter().take(12).collect::<Vec<_>>());
+    }
+    #[test]
+    fn animation_updates_log_transitions_and_skip_unchanged_reads() {
+        let inner = Arc::new(Mutex::new(MonitorInner::default()));
+        let animation = |state: u8| AnimationState { index: 1, anim_name: "call_ramp".into(), name: "bramp".into(), root_name: "bramp".into(), state, activation: 0, flags: 0, instances: 1, running_instances: u32::from(animations::is_running(state)), reset_time: -1.0, timer: 0.0, max_health: 0.0, cur_health: 0.0, sequences: Vec::new(), changed_at: None };
+        let first = update_animations(&inner, Ok(vec![animation(1)])).unwrap();
+        assert!(first.events.is_empty());
+        assert!(update_animations(&inner, Ok(vec![animation(1)])).is_none());
+        let running = update_animations(&inner, Ok(vec![animation(2)])).unwrap();
+        assert_eq!((running.events[0].from_state, running.events[0].to_state), (1, 2));
+        assert!(running.animations[0].changed_at.is_some());
+        let failed = update_animations(&inner, Err("No animation definitions are loaded yet.".into())).unwrap();
+        assert_eq!(failed.animations.len(), 1);
+        assert!(update_animations(&inner, Err("No animation definitions are loaded yet.".into())).is_none());
+    }
+    #[test]
+    #[ignore = "requires a running, supported Mech3.exe mission"]
+    fn reads_live_animation_table() {
+        let candidate = list_candidates().unwrap().into_iter().find(|candidate| candidate.compatible)
+            .expect("start the supported Mech3.exe build before running this test");
+        let module = inspect_compatible_process(candidate.pid).unwrap();
+        let animations = read_live_animations(candidate.pid, module.base_address).unwrap();
+        let mut states: std::collections::BTreeMap<u8, usize> = Default::default();
+        for animation in &animations { *states.entry(animation.state).or_default() += 1; }
+        eprintln!("{} animations, states {states:?}", animations.len());
+        for animation in animations.iter().filter(|animation| animation.running_instances > 0 && !animation.anim_name.contains(".flt")).take(10) { eprintln!("{animation:?}"); }
+        for animation in animations.iter().filter(|animation| animation.anim_name.starts_with("start_") || animation.anim_name.contains("ramp") || animation.state == 0 || animation.state == 4).take(16) { eprintln!("{} {} {} st={} act={} inst={}/{} health={}/{} reset={}/{}", animation.index, animation.anim_name, animation.name, animation.state, animation.activation, animation.running_instances, animation.instances, animation.cur_health, animation.max_health, animation.timer, animation.reset_time); }
+        assert!(animations.iter().any(|animation| animation.anim_name.starts_with("start_")));
     }
     #[test]
     #[ignore = "requires a running, supported Mech3.exe mission and write permission"]
