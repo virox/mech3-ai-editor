@@ -3,12 +3,19 @@ import type { Json, ValveGraphHost, ValveGraphNode, ValveGraphPort, ValveGraphSn
 export interface GraphPoint { x:number; y:number }
 export type GraphPositions = Record<string,GraphPoint>;
 
-export const BLOCK_WIDTH=220;
-export const BLOCK_HEIGHT=104;
-export const CHANNEL_WIDTH=190;
-export const CHANNEL_HEIGHT=62;
+export const GRID_SIZE=30;
+export const BLOCK_WIDTH=8*GRID_SIZE;
+export const BLOCK_HEIGHT=4*GRID_SIZE;
+export const CHANNEL_WIDTH=7*GRID_SIZE;
+export const CHANNEL_HEIGHT=2*GRID_SIZE;
 export const MAX_AUTO_LAYOUT_ROWS=20;
-const AUTO_LAYOUT_ROW_GAP=38;
+export const snapToGrid=(value:number)=>Math.round(value/GRID_SIZE)*GRID_SIZE;
+/** Card heights are an even number of grid cells so the vertical middle lies on a grid line. */
+const evenCells=(value:number)=>Math.max(BLOCK_HEIGHT,Math.ceil(value/(2*GRID_SIZE))*2*GRID_SIZE);
+const gridCeil=(value:number)=>Math.ceil(value/GRID_SIZE)*GRID_SIZE;
+const AUTO_LAYOUT_ORIGIN=3*GRID_SIZE;
+const AUTO_LAYOUT_COLUMN_WIDTH=12*GRID_SIZE;
+const AUTO_LAYOUT_ROW_GAP=2*GRID_SIZE;
 
 export interface GraphRect {x:number;y:number;w:number;h:number}
 
@@ -117,16 +124,18 @@ export function nodeOutputLine(node:ValveGraphNode){
   return `${port.channel}${port.value===undefined?'':` = ${port.value}`}${writes.length>1?` +${writes.length-1}`:''}`;
 }
 
-export const OUTPUT_ROW_Y=82;
-const OUTPUT_ROW_HEIGHT=18;
-/** Vertical shift of everything below the output row. */
-export function nodeOutputOffset(node:ValveGraphNode){return nodeOutputLine(node)?OUTPUT_ROW_HEIGHT:0}
+/** First condition row baseline; the output channel shares the bottom row with the layer label. */
+export const CONDITION_ROW_Y=84;
 
-/** Read ports stack from the label row; write ports start at the output row so the highlighted channel sits next to its port. */
+/** Card middle (a grid line, since heights are even cell counts); edges and ports attach here. */
+export function nodeAnchorY(node:ValveGraphNode){return nodeCardHeight(node)/2}
+
+/** Ports sit on grid lines around the card middle; several ports on one side take consecutive grid lines. */
 export function portOffsetY(node:ValveGraphNode,index:number){
   const port=node.ports[index];
-  const sameDirection=node.ports.slice(0,index).filter(item=>item.direction===port.direction).length;
-  return (port.direction==='write'?OUTPUT_ROW_Y-5:54)+sameDirection*18;
+  const sameSide=node.ports.filter(item=>item.direction===port.direction);
+  const position=node.ports.slice(0,index).filter(item=>item.direction===port.direction).length;
+  return Math.max(GRID_SIZE,nodeAnchorY(node)+(position-Math.floor((sameSide.length-1)/2))*GRID_SIZE);
 }
 
 export function nodeIsActive(node:ValveGraphNode){return node.kind==='vlist-producer'&&enabled(recordValue(node,14))}
@@ -148,7 +157,7 @@ export function wrapCardLine(line:string,width=CARD_ROW_CHARS):string[]{
 
 export function nodeCardRows(node:ValveGraphNode){return nodeCardLines(node).flatMap(line=>wrapCardLine(line))}
 
-export function nodeCardHeight(node:ValveGraphNode){return (hasDetailedCard(node)?Math.max(BLOCK_HEIGHT,92+nodeCardRows(node).length*14):BLOCK_HEIGHT)+nodeOutputOffset(node)}
+export function nodeCardHeight(node:ValveGraphNode){return evenCells((hasDetailedCard(node)?CONDITION_ROW_Y+8+nodeCardRows(node).length*14:96))}
 
 export function cycleNodeIds(graph:ValveGraphSnapshot):Set<string>{
   const links=new Map<string,string[]>();
@@ -160,7 +169,7 @@ export function cycleNodeIds(graph:ValveGraphSnapshot):Set<string>{
 export function autoLayout(graph:ValveGraphSnapshot):GraphPositions{
   const lanes=new Map<number,{id:string;order:number;label:string;height:number}[]>();
   const cycles=cycleNodeIds(graph);
-  const add=(column:number,id:string,order:number,label:string,height:number)=>lanes.set(column,[...(lanes.get(column)??[]),{id,order,label,height}]);
+  const add=(column:number,id:string,order:number,label:string,height:number)=>lanes.set(column,[...(lanes.get(column)??[]),{id,order,label,height:gridCeil(height)}]);
   for(const node of graph.nodes)if(!cycles.has(node.id))add(categoryColumn[node.category]??3,node.id,node.order,node.label,nodeCardHeight(node));
   for(const channel of graph.channels)add(1,channelNodeId(channel.name),0,channel.name,CHANNEL_HEIGHT);
   const positions:GraphPositions={};
@@ -179,15 +188,15 @@ export function autoLayout(graph:ValveGraphSnapshot):GraphPositions{
       const wrapColumn=Math.floor(index/MAX_AUTO_LAYOUT_ROWS);
       const row=index%MAX_AUTO_LAYOUT_ROWS;
       const yOffset=columnRowHeights[wrapColumn].slice(0,row).reduce((total,height)=>total+height+AUTO_LAYOUT_ROW_GAP,0);
-      positions[item.id]={x:70+(column+expandedColumns+wrapColumn)*340,y:70+yOffset};
+      positions[item.id]={x:AUTO_LAYOUT_ORIGIN+(column+expandedColumns+wrapColumn)*AUTO_LAYOUT_COLUMN_WIDTH,y:AUTO_LAYOUT_ORIGIN+yOffset};
     });
   }
   if(cycles.size){
-    const startY=Math.max(70,...graph.nodes.filter(node=>!cycles.has(node.id)).map(node=>(positions[node.id]?.y??70)+nodeCardHeight(node)))+116;
+    const startY=gridCeil(Math.max(AUTO_LAYOUT_ORIGIN,...graph.nodes.filter(node=>!cycles.has(node.id)).map(node=>(positions[node.id]?.y??AUTO_LAYOUT_ORIGIN)+nodeCardHeight(node)))+4*GRID_SIZE);
     const cycleNodes=graph.nodes.filter(node=>cycles.has(node.id)).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id));
     const cycleChannels=[...new Set(cycleNodes.flatMap(node=>node.ports.map(port=>port.channel)))].sort();
-    cycleChannels.forEach((name,index)=>positions[channelNodeId(name)]={x:410+Math.floor(index/MAX_AUTO_LAYOUT_ROWS)*340,y:startY+(index%MAX_AUTO_LAYOUT_ROWS)*92});
-    cycleNodes.forEach((node,index)=>positions[node.id]={x:750+Math.floor(index/MAX_AUTO_LAYOUT_ROWS)*340,y:startY+(index%MAX_AUTO_LAYOUT_ROWS)*142});
+    cycleChannels.forEach((name,index)=>positions[channelNodeId(name)]={x:15*GRID_SIZE+Math.floor(index/MAX_AUTO_LAYOUT_ROWS)*AUTO_LAYOUT_COLUMN_WIDTH,y:startY+(index%MAX_AUTO_LAYOUT_ROWS)*3*GRID_SIZE});
+    cycleNodes.forEach((node,index)=>positions[node.id]={x:27*GRID_SIZE+Math.floor(index/MAX_AUTO_LAYOUT_ROWS)*AUTO_LAYOUT_COLUMN_WIDTH,y:startY+(index%MAX_AUTO_LAYOUT_ROWS)*5*GRID_SIZE});
   }
   return positions;
 }

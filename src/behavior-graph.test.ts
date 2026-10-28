@@ -8,14 +8,16 @@ const graph:ValveGraphSnapshot={scopeKey:'m4',nodes:[
 ],channels:[{id:'channel::m4factbrg',name:'m4factbrg',producerCount:1,consumerCount:1,layers:['mission','campaign-base']}],edges:[{id:'a',from:'pp',to:'channel::m4factbrg',channel:'m4factbrg'},{id:'b',from:'channel::m4factbrg',to:'cp',channel:'m4factbrg'}],hosts:[],diagnostics:[]};
 
 describe('behavior graph helpers',()=>{
+  it('keeps card sizes and port anchors on the 30 unit grid',()=>{const node={...graph.nodes[0],ports:[graph.nodes[0].ports[0],{...graph.nodes[0].ports[0],id:'w2'}]};expect(nodeCardHeight(node)%60).toBe(0);for(const index of [0,1])expect(portOffsetY(node,index)%30).toBe(0)});
+  it('keeps automatic positions on the 30 unit grid',()=>{for(const point of Object.values(autoLayout(graph))){expect(point.x%30).toBe(0);expect(point.y%30).toBe(0)}});
   it('lays roles out deterministically',()=>{const a=autoLayout(graph),b=autoLayout(graph);expect(a).toEqual(b);expect(a.p.x).toBeLessThan(a[channelNodeId('m4factbrg')].x);expect(a.c.x).toBeGreaterThan(a[channelNodeId('m4factbrg')].x)});
   it('wraps every automatic lane after twenty items',()=>{
     const manyProducers=Array.from({length:MAX_AUTO_LAYOUT_ROWS+1},(_,index)=>({...graph.nodes[0],id:`producer-${index}`,label:`Producer ${index}`,order:index,ports:[{...graph.nodes[0].ports[0],id:`producer-port-${index}`,channel:`producer-channel-${index}`}] }));
     const manyChannels=Array.from({length:MAX_AUTO_LAYOUT_ROWS+1},(_,index)=>({id:channelNodeId(`channel-${index}`),name:`channel-${index}`,producerCount:1,consumerCount:0,layers:['mission']}));
     const laidOut=autoLayout({...graph,nodes:manyProducers,channels:manyChannels});
-    expect(laidOut[`producer-${MAX_AUTO_LAYOUT_ROWS-1}`].y).toBe(70+(MAX_AUTO_LAYOUT_ROWS-1)*(nodeCardHeight(manyProducers[0])+38));
-    expect(laidOut[`producer-${MAX_AUTO_LAYOUT_ROWS}`]).toEqual({x:410,y:70});
-    expect(laidOut[channelNodeId('channel-9')]).toEqual({x:1090,y:70});
+    expect(laidOut[`producer-${MAX_AUTO_LAYOUT_ROWS-1}`].y).toBe(90+(MAX_AUTO_LAYOUT_ROWS-1)*(Math.ceil(nodeCardHeight(manyProducers[0])/30)*30+60));
+    expect(laidOut[`producer-${MAX_AUTO_LAYOUT_ROWS}`]).toEqual({x:450,y:90});
+    expect(laidOut[channelNodeId('channel-9')]).toEqual({x:1170,y:90});
   });
   it('summarizes VList triggers and grows the card for multiple conditions',()=>{
     const vlist={...graph.nodes[0],kind:'vlist-producer',label:'AI / region condition',subtitle:'atlas',ports:[{...graph.nodes[0].ports[0],channel:'door_open',value:1}],nativeRecord:[1,1,.8,0,1,.35,0,.8,1,'hangar',0,0,0,60,0,'door_open',1]};
@@ -23,7 +25,7 @@ describe('behavior graph helpers',()=>{
     expect(lines).toEqual(['Health ≤ 0.350','or Ammo ≤ 0.800','or Always (enters + exits hangar)']);
     expect(nodeOutputLine(vlist)).toBe('door_open = 1');
     expect(nodeIsActive(vlist)).toBe(false);
-    expect(nodeCardHeight(vlist)).toBe(152);
+    expect(nodeCardHeight(vlist)).toBe(180);
   });
   it('labels C1M1 Owens rows and rows that can never fire',()=>{
     const row=(record:Json[])=>nodeCardLines({...graph.nodes[0],kind:'vlist-producer',nativeRecord:record});
@@ -39,13 +41,13 @@ describe('behavior graph helpers',()=>{
     expect(wrapCardLine('Health ≤ 0.000')).toEqual(['Health ≤ 0.000']);
     const never={...graph.nodes[0],kind:'vlist-producer',ports:[{...graph.nodes[0].ports[0],channel:'firefly_02_go',value:1}],nativeRecord:[1,0,.25,0,0,.999,0,.8,1,0,0,0,0,60,1,'firefly_02_go',0]};
     expect(nodeCardRows(never)).toHaveLength(2);
-    expect(nodeCardHeight(never)).toBe(nodeCardHeight({...never,nativeRecord:[1,0,.25,0,1,0,0,.8,0,0,0,0,0,60,1,'firefly_02_go',0]})+14);
+    expect(nodeCardHeight(never)).toBeGreaterThanOrEqual(nodeCardHeight({...never,nativeRecord:[1,0,.25,0,1,0,0,.8,0,0,0,0,0,60,1,'firefly_02_go',0]}));
   });
   it('summarizes target health output and threshold',()=>{
     const health={...graph.nodes[0],kind:'target-health-producer',subtitle:'satdish',ports:[{...graph.nodes[0].ports[0],channel:'comcntr_hit',value:1}],nativeRecord:['comcntr_hit',1,35]};
     expect(nodeOutputLine(health)).toBe('comcntr_hit = 1');
     expect(nodeCardLines(health)).toEqual(['Health Threshold: 35.000']);
-    expect(nodeCardHeight(health)).toBe(124);
+    expect(nodeCardHeight(health)).toBe(120);
   });
   it('summarizes animation callback producers with their callers',()=>{
     const callback={...graph.nodes[0],kind:'animation-callback',label:'Animation callback',subtitle:'bramp / call_ramp',ports:[{...graph.nodes[0].ports[0],channel:'bramp',value:1}],properties:{callback:43,sequence:'effect_sequence',activation:'ON_CALL',executionRange:500,calledBy:['start_single_player_m1 (horizon)']},nativeRecord:['CALLBACK',['VALUE',[43]]]};
@@ -68,11 +70,12 @@ describe('behavior graph helpers',()=>{
     const read={...graph.nodes[0].ports[0],direction:'read' as const};
     const assignment={...graph.nodes[1],kind:'net-assignment',ports:[write]};
     expect(nodeOutputLine(assignment)).toBe('destroy_truck_01 = 1');
-    expect(nodeCardHeight(assignment)).toBe(122);
+    expect(nodeCardHeight(assignment)).toBe(120);
     expect(nodeOutputLine({...assignment,ports:[write,{...write,channel:'other'}]})).toBe('destroy_truck_01 = 1 +1');
     expect(nodeOutputLine({...assignment,ports:[read]})).toBe('');
     const delay={...assignment,kind:'valve-delayupdate',ports:[read,write]};
-    expect([portOffsetY(delay,0),portOffsetY(delay,1)]).toEqual([54,77]);
+    expect([portOffsetY(delay,0),portOffsetY(delay,1)]).toEqual([60,60]);
+    expect([portOffsetY({...delay,ports:[write,{...write,id:'w2'}]},0),portOffsetY({...delay,ports:[write,{...write,id:'w2'}]},1)]).toEqual([60,90]);
   });
   it('isolates a complete connected chain',()=>expect([...connectedIds(graph,'p')].sort()).toEqual(['c','channel::m4factbrg','p']));
   it('continues an isolated chain across a network route edge',()=>{
