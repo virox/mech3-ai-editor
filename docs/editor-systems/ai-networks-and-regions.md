@@ -175,4 +175,12 @@ elements are payload (the channel and the value to assign). Other tags such
 as `gate`, `deploy`, `name`, and `auxname` have their own layouts and should
 not be decoded by the generic leading-`1` rule.
 
+`deploy [mcb, mcb_value, site, site_value, node]` names two state channels.
+The MCB leaves the node once the engine channel `mcbdeploy` is `1` and `site`
+differs from `site_value`, then sets `mcb = mcb_value`. The `site` channel
+(C1M4: `MFB 1`–`MFB 4`) is written by the executable when the player orders
+the MCB to that site. The `mcb` channel (`mobilehq_0N`) is read back only by
+the executable's MCB manager, which ends its deploy phase once every active
+MCB's channel is nonzero; see `docs/aiv-research/engine-state-writers.md`.
+
 The original Resource 141 `Node Edit - Vehicle` dialog proves controls for X, Y, Z, Yaw, Vehicle Type, and Friend/Foe/Other, but those dialog offsets are not assigned to serialized fields until their commit/copy path is joined to the AI-net serializer. Unproven fields retain technical labels.

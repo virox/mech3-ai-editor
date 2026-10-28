@@ -36,8 +36,8 @@ function recordValue(node:ValveGraphNode,index:number){return Array.isArray(node
 function enabled(value:unknown){return value===true||value===1||value==='1'}
 function decimal(value:unknown){return typeof value==='number'&&Number.isFinite(value)?value.toFixed(3):String(value??'')}
 
-export const READ_ONLY_KINDS=new Set(['unknown-action','animation-callback']);
-export const READ_ONLY_PORT_KINDS=new Set(['animation-callback']);
+export const READ_ONLY_KINDS=new Set(['unknown-action','animation-callback','net-deploy','engine-mcb-order','engine-mcb-complete']);
+export const READ_ONLY_PORT_KINDS=new Set(['animation-callback','net-deploy','engine-mcb-order','engine-mcb-complete']);
 const DETAILED_CARD_KINDS=new Set(['vlist-producer','target-health-producer','animation-callback']);
 export function hasDetailedCard(node:ValveGraphNode){return DETAILED_CARD_KINDS.has(node.kind)||nodeCardLines(node).length>0}
 
@@ -78,6 +78,8 @@ function networkLines(node:ValveGraphNode):string[]{
     case'net-union':return[...value.map((member,index)=>`${index?'or':'Any of:'} ${condition(list(member),' = 1 (default)')}`),...context];
     // The assigned channel is the card's output row.
     case'net-assignment':return context;
+    // deploy [mcb, mcb_value, site, site_value, node] (FUN_004d00a0).
+    case'net-deploy':return[`Waits for order: ${text(value[2])} ≠ ${text(value[3])}`,'and mcbdeploy = 1',`Then sets ${text(value[0])} = ${text(value[1])}`,...context];
     default:return[];
   }
 }
@@ -104,6 +106,13 @@ function animationCallbackLines(node:ValveGraphNode):string[]{
 }
 
 export function nodeCardLines(node:ValveGraphNode):string[]{
+  // Both halves of the executable's MCB deploy cycle: the player's order (FUN_0045a780)
+  // and the deploy state's completion check (FUN_0045ab70), which allows the next order.
+  if(node.kind==='engine-mcb-order')return['Player orders the MCB to a site:','mcbdeploy = 1, chosen site = 1','previously chosen site = 0','↻ after MCB deploy complete'];
+  if(node.kind==='engine-mcb-complete'){
+    const mcbs=Array.isArray(node.properties.mcbs)?node.properties.mcbs.map(String):[];
+    return['Deploy phase ends when every active MCB arrived:',...mcbs.map((mcb,index)=>`${index?'and ':''}${mcb} ≠ 0`),'↻ next order: MCB deploy order'];
+  }
   if(node.kind==='animation-callback')return animationCallbackLines(node);
   if(node.kind.startsWith('valve-')||node.kind==='unknown-action')return valveActionLines(node);
   if(node.kind.startsWith('net-'))return networkLines(node);

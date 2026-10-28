@@ -842,6 +842,8 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
     // and assignments by the link they sit on, for the derived route edges below.
     let mut gates: Vec<(NetworkSite, String, String)> = Vec::new();
     let mut assignments: Vec<(NetworkSite, String, String)> = Vec::new();
+    let mut deploy_sites: Vec<(String, Vec<usize>)> = Vec::new();
+    let mut deploy_mcbs: Vec<(String, Vec<usize>)> = Vec::new();
     for pair_index in (0..list.len().saturating_sub(1)).step_by(2) {
         let Some(node_key) = list[pair_index].as_str() else {
             continue;
@@ -875,7 +877,7 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
             .chunks(2)
             .filter_map(|pair| match pair {
                 [Value::String(tag), value]
-                    if !matches!(tag.as_str(), "valve" | "valveunion" | "valve_assign") =>
+                    if !matches!(tag.as_str(), "valve" | "valveunion" | "valve_assign" | "deploy") =>
                 {
                     Some(json!([tag, value]))
                 }
@@ -887,7 +889,7 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
                 tag_index += 2;
                 continue;
             };
-            if !matches!(tag, "valve" | "valveunion" | "valve_assign") {
+            if !matches!(tag, "valve" | "valveunion" | "valve_assign" | "deploy") {
                 tag_index += 2;
                 continue;
             }
@@ -915,6 +917,49 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
                         ));
                     }
                     ("net-assignment", "producer", "Network assignment")
+                }
+                // deploy [mcb, mcb_value, site, site_value, node] (FUN_004db1b0 at 0x4db41e):
+                // the MCB leaves once `mcbdeploy` == 1 and `site` != site_value, then
+                // writes mcb = mcb_value (FUN_004d00a0 at 0x4d06b2).
+                "deploy" => {
+                    let site_path = [record_path.as_slice(), &[tag_index + 1, 2]].concat();
+                    if let Some(site) = value.get(2).and_then(Value::as_str) {
+                        ports.push(port(
+                            &node_id,
+                            ports.len(),
+                            "Deploy order",
+                            "read",
+                            site,
+                            None,
+                            &document.id,
+                            site_path.clone(),
+                        ));
+                        deploy_sites.push((site.to_owned(), site_path));
+                    }
+                    ports.push(port(
+                        &node_id,
+                        ports.len(),
+                        "MCB deploy command",
+                        "read",
+                        MCB_DEPLOY_CHANNEL,
+                        Some(1),
+                        &document.id,
+                        [record_path.as_slice(), &[tag_index]].concat(),
+                    ));
+                    if let Some(mcb) = value.first().and_then(Value::as_str) {
+                        deploy_mcbs.push((mcb.to_owned(), [record_path.as_slice(), &[tag_index + 1, 0]].concat()));
+                        ports.push(port(
+                            &node_id,
+                            ports.len(),
+                            "MCB state",
+                            "write",
+                            mcb,
+                            integer(value.get(1)),
+                            &document.id,
+                            [record_path.as_slice(), &[tag_index + 1, 0]].concat(),
+                        ));
+                    }
+                    ("net-deploy", "consumer", "MCB deploy site")
                 }
                 "valve" => {
                     if let Some(channel) = value.get(1).and_then(Value::as_str) {
@@ -975,7 +1020,11 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
             }
             if let Some(site) = site {
                 let entry = (site, node_id.clone(), node_key.to_owned());
-                if kind == "net-assignment" { assignments.push(entry) } else { gates.push(entry) }
+                match kind {
+                    "net-assignment" => assignments.push(entry),
+                    "net-deploy" => {}
+                    _ => gates.push(entry),
+                }
             }
             builder.add_node(ValveGraphNode {
                 id: node_id,
@@ -1003,6 +1052,9 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
             tag_index += 2;
         }
     }
+    if !deploy_sites.is_empty() {
+        add_mcb_order_producer(builder, document, &archive_path, &root_path, &deploy_sites, &deploy_mcbs);
+    }
     for (site, assignment_id, assignment_key) in &assignments {
         let NetworkSite::Link(from, to) = *site else {
             continue;
@@ -1027,6 +1079,120 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
 enum NetworkSite {
     Node(u64),
     Link(u64, u64),
+}
+
+/// Engine channel set to 1 when the player orders the MCB to deploy (0x4cfe5d, 0x45a7eb).
+const MCB_DEPLOY_CHANNEL: &str = "mcbdeploy";
+
+/// The player's MCB deploy order is written by the executable, not by any Reader:
+/// FUN_0045a780 sets `mcbdeploy` = 1, the previously ordered site = 0 and the
+/// chosen site's channel (its name, e.g. "MFB 1") = 1. One card per network
+/// lists every site its `deploy` tags wait for. The same MCB manager reads the
+/// MCB channels back: its deploy state (vtable 0x5c2620, check FUN_0045ab70)
+/// ends once every active MCB's channel (mgr+0x20..0x28, bound to the vehicle
+/// name by FUN_0045a030) is nonzero, i.e. after the `deploy` tag wrote it.
+fn add_mcb_order_producer(
+    builder: &mut Builder<'_>,
+    document: &WorkspaceDocument,
+    archive_path: &str,
+    root_path: &[usize],
+    sites: &[(String, Vec<usize>)],
+    mcbs: &[(String, Vec<usize>)],
+) {
+    let node_id = format!("node::{}::engine:mcb-order", stable_prefix(document, archive_path));
+    let mut ports = vec![port(
+        &node_id,
+        0,
+        "Deploy command",
+        "write",
+        MCB_DEPLOY_CHANNEL,
+        Some(1),
+        &document.id,
+        root_path.to_vec(),
+    )];
+    let mut site_names: Vec<String> = Vec::new();
+    for (site, path) in sites {
+        if !site_names.contains(site) {
+            site_names.push(site.clone());
+            ports.push(port(
+                &node_id,
+                ports.len(),
+                format!("Ordered site {site}"),
+                "write",
+                site.clone(),
+                Some(1),
+                &document.id,
+                path.clone(),
+            ));
+        }
+    }
+    builder.add_node(ValveGraphNode {
+        id: node_id,
+        kind: "engine-mcb-order".into(),
+        category: "producer".into(),
+        label: "MCB deploy order".into(),
+        subtitle: format!("{} · executable", document.entry_name),
+        layer: document.layer.clone(),
+        locked: true,
+        order: 0,
+        binding: binding(
+            document,
+            archive_path,
+            "engine",
+            "engine:mcb-order".into(),
+            root_path.to_vec(),
+            0,
+            0,
+            "slice",
+        ),
+        ports,
+        properties: json!({"sites": site_names}),
+        native_record: Value::Null,
+    });
+
+    // The deploy state's read side gets its own card, so the order → deploy
+    // sites → completion cycle reads left to right instead of looping back.
+    let node_id = format!("node::{}::engine:mcb-complete", stable_prefix(document, archive_path));
+    let mut ports = Vec::new();
+    let mut mcb_names: Vec<String> = Vec::new();
+    for (mcb, path) in mcbs {
+        if !mcb_names.contains(mcb) {
+            mcb_names.push(mcb.clone());
+            ports.push(port(
+                &node_id,
+                ports.len(),
+                format!("{mcb} arrived"),
+                "read",
+                mcb.clone(),
+                None,
+                &document.id,
+                path.clone(),
+            ));
+        }
+    }
+    builder.add_node(ValveGraphNode {
+        id: node_id,
+        kind: "engine-mcb-complete".into(),
+        category: "consumer".into(),
+        label: "MCB deploy complete".into(),
+        subtitle: format!("{} · executable", document.entry_name),
+        layer: document.layer.clone(),
+        locked: true,
+        order: 1,
+        binding: binding(
+            document,
+            archive_path,
+            "engine",
+            "engine:mcb-complete".into(),
+            root_path.to_vec(),
+            0,
+            0,
+            "slice",
+        ),
+        ports,
+        properties: json!({"mcbs": mcb_names}),
+        native_record: Value::Null,
+    });
 }
 
 /// `node_NN` records are network nodes; records that start with `[from, to]` are links.
@@ -1408,14 +1574,14 @@ const STATE_CALLBACKS: std::ops::RangeInclusive<i64> = 42..=49;
 
 /// Kinds whose native record body cannot be updated or removed from the graph.
 pub(crate) fn read_only_kind(kind: &str) -> bool {
-    matches!(kind, "unknown-action" | "animation-callback")
+    matches!(kind, "unknown-action" | "animation-callback" | "net-deploy" | "engine-mcb-order" | "engine-mcb-complete")
 }
 
 /// Kinds whose channel ports cannot be rebound. An animation callback's channel
 /// is the definition `NAME`, which also identifies sibling definitions and
 /// world nodes, so rewriting it from the graph would silently break the anim.
 pub(crate) fn read_only_ports(kind: &str) -> bool {
-    kind == "animation-callback"
+    matches!(kind, "animation-callback" | "net-deploy" | "engine-mcb-order" | "engine-mcb-complete")
 }
 
 pub(crate) fn is_animation_document(root: &Value) -> bool {
@@ -3078,6 +3244,45 @@ mod tests {
             .ports
             .iter()
             .any(|port| port.direction == "read" && port.channel == "m5_all"));
+    }
+
+    #[test]
+    fn c1m4_deploy_sites_are_written_by_the_mcb_order() {
+        let network = document(
+            "net",
+            "mission",
+            "net_01.zrd",
+            "network",
+            "mission",
+            json!([[
+                "node_01",
+                [12, [69.8, 3.0, 566.3], [7], "valve", [1, "mcbdeploy", 1],
+                 "deploy", ["mobilehq_01", 1, "MFB 1", 0, 0]],
+                "node_11",
+                [12, [768.2, 3.0, 1133.8], [22], "wait_interval", [1, 10.0],
+                 "deploy", ["mobilehq_01", 1, "MFB 2", 0, 10]]
+            ]]),
+        );
+        let graph = build_valve_graph(
+            &[network],
+            &[archive("mission", "mission", false)],
+            "readerm4.zbd",
+        );
+        let deploys: Vec<_> = graph.nodes.iter().filter(|node| node.kind == "net-deploy").collect();
+        assert_eq!(deploys.len(), 2);
+        assert!(deploys[0].ports.iter().any(|port| port.direction == "read" && port.channel == "MFB 1" && port.value.is_none()));
+        assert!(deploys[0].ports.iter().any(|port| port.direction == "read" && port.channel == "mcbdeploy" && port.value == Some(1)));
+        assert!(deploys[0].ports.iter().any(|port| port.direction == "write" && port.channel == "mobilehq_01" && port.value == Some(1)));
+        assert_eq!(deploys[1].properties["nodeTags"], json!([["wait_interval", [1, 10.0]]]));
+        let order = graph.nodes.iter().find(|node| node.kind == "engine-mcb-order").unwrap();
+        let writes: Vec<_> = order.ports.iter().filter(|port| port.direction == "write").map(|port| port.channel.as_str()).collect();
+        assert_eq!(writes, ["mcbdeploy", "MFB 1", "MFB 2"]);
+        assert!(order.ports.iter().all(|port| port.direction == "write"));
+        let complete = graph.nodes.iter().find(|node| node.kind == "engine-mcb-complete").unwrap();
+        let reads: Vec<_> = complete.ports.iter().map(|port| (port.direction.as_str(), port.channel.as_str())).collect();
+        assert_eq!(reads, [("read", "mobilehq_01")]);
+        assert!(read_only_kind(&complete.kind) && read_only_ports(&complete.kind));
+        assert!(read_only_kind(&order.kind) && read_only_ports("net-deploy"));
     }
 
     #[test]

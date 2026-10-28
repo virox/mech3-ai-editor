@@ -70,6 +70,9 @@ describe('behavior graph helpers',()=>{
     const waiting={...consumer('net-union',['valveunion',[[1,'bramp',1]]]),properties:{nodeTags:[['wait_interval',[1,1.0]],['speed',[0,5]],['gate',['ttruck_01']]]}};
     expect(nodeCardLines(waiting)).toEqual(['Any of: bramp = 1','Also here: wait_interval 1 s','Also here: speed 5 · disabled','Also here: gate ttruck_01']);
     expect(nodeCardLines(consumer('objective-observer',[]))).toEqual([]);
+    expect(nodeCardLines(consumer('net-deploy',['deploy',['mobilehq_01',1,'MFB 1',0,0]]))).toEqual(['Waits for order: MFB 1 ≠ 0','and mcbdeploy = 1','Then sets mobilehq_01 = 1']);
+    expect(nodeCardLines(consumer('engine-mcb-order',[]))).toEqual(['Player orders the MCB to a site:','mcbdeploy = 1, chosen site = 1','previously chosen site = 0','↻ after MCB deploy complete']);
+    expect(nodeCardLines({...consumer('engine-mcb-complete',[]),properties:{mcbs:['mobilehq_01','mobilehq_02']}})).toEqual(['Deploy phase ends when every active MCB arrived:','mobilehq_01 ≠ 0','and mobilehq_02 ≠ 0','↻ next order: MCB deploy order']);
   });
   it('gives every producer the same output row with its write port beside it',()=>{
     const write={...graph.nodes[0].ports[0],direction:'write' as const,channel:'destroy_truck_01',value:1};
