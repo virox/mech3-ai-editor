@@ -1704,7 +1704,7 @@ dependencies = [
 
 [[package]]
 name = "mech3-ai-editor"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "mech3ax-anim",
