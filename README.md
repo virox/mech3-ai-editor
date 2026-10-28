@@ -176,3 +176,10 @@ Use **Save repository JSON** to validate and overwrite `src/ai-layout.json`.
 The normal `npm run build` then bundles that layout. Invalid or incompatible
 bindings (for example, a Team control not linked to `record[3]`) are shown in
 the developer toolbar and cannot be saved or previewed.
+
+## Licence
+
+Mech Reader Studio and the Valve Switchboard are licensed under the European
+Union Public Licence v. 1.2 (EUPL-1.2), see `LICENSE`. The editor statically
+links parts of [mech3ax](https://github.com/TerranMechworks/mech3ax), which is
+also EUPL-1.2; see `THIRD-PARTY-NOTICES.md`.

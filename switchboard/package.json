@@ -1,6 +1,7 @@
 {
   "name": "mech3-valve-switchboard",
   "private": true,
+  "license": "EUPL-1.2",
   "scripts": {
     "dev": "vite --config vite.config.ts",
     "build": "vite build --config vite.config.ts",

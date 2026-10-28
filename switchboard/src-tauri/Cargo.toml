@@ -1,7 +1,8 @@
 [package]
 name = "mech3-valve-switchboard"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2024"
+license = "EUPL-1.2"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
