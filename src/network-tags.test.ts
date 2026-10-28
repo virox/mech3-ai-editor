@@ -4,7 +4,7 @@ import {badgeWidth,tagBadge} from './network-tags';
 describe('network tag badges',()=>{
   it('summarizes the c1m1 net_01 truck records',()=>{
     expect(tagBadge('valve',[1,'truck_go'])).toMatchObject({kind:'condition',text:'⏸ truck_go'});
-    expect(tagBadge('valve',[1,'truck_go']).title).toContain('outgoing-link index');
+    expect(tagBadge('valve',[1,'truck_go']).title).toContain('last outgoing link');
     expect(tagBadge('gate',['ttruck_02'])).toMatchObject({kind:'gate',text:'gate ttruck_02'});
     expect(tagBadge('valve_assign',['destroy_truck_02',1])).toMatchObject({kind:'assign',text:'→ destroy_truck_02 = 1'});
   });

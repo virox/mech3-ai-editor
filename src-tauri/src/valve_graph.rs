@@ -478,7 +478,7 @@ fn valve_node(
             let seconds = args.get(1).cloned().unwrap_or(Value::Null);
             label = format!("Delay to {target}");
             subtitle = format!(
-                "{} s · output value implicit",
+                "{} s · copies trigger value",
                 scalar(args.get(1))
             );
             ports.push(port(
@@ -491,7 +491,7 @@ fn valve_node(
                 &document.id,
                 [root_path, &[pair_index + 1, 1, 0]].concat(),
             ));
-            properties = json!({"event":event,"actionType":action,"target":target,"seconds":seconds,"outputValue":"implicit"});
+            properties = json!({"event":event,"actionType":action,"target":target,"seconds":seconds,"outputValue":"trigger"});
         } else {
             builder.diagnostic(
                 "error",
@@ -864,6 +864,8 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
             &format!("node:{pair_index}"),
             json!({"node":node_key,"spatial":spatial}),
         );
+        // Outgoing links of a spatial node; a bare `valve` target is derived from them.
+        let link_count = if spatial { record.get(2).and_then(Value::as_array).map(Vec::len) } else { None };
         let mut tag_index = if spatial { 3 } else { 1 };
         while tag_index + 1 < record.len() {
             let Some(tag) = record[tag_index].as_str() else {
@@ -980,7 +982,7 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
                     "slice",
                 ),
                 ports,
-                properties: json!({"tag":tag,"node":node_key,"spatial":spatial}),
+                properties: json!({"tag":tag,"node":node_key,"spatial":spatial,"linkCount":link_count}),
                 native_record,
             });
             tag_index += 2;
@@ -2829,7 +2831,7 @@ mod tests {
             .iter()
             .any(|port| port.direction == "write" && port.channel == "mis_success"));
         assert_eq!(delay.properties["seconds"], 4.0);
-        assert_eq!(delay.properties["outputValue"], "implicit");
+        assert_eq!(delay.properties["outputValue"], "trigger");
 
         assert!(graph.nodes.iter().any(|node| {
             node.kind == "objective-observer"

@@ -20,7 +20,7 @@ function condition(member:Json[]){
 export function tagBadge(tag:string,value:Json):TagBadge{
   const args=list(value);
   switch(tag){
-    case'valve':return {kind:'condition',text:`⏸ ${condition(args)}`,title:`Waits until ${text(args[1])} ${args[2]===undefined?'matches the target derived from the outgoing-link index':`= ${text(args[2])}`} before leaving on this link`};
+    case'valve':return {kind:'condition',text:`⏸ ${condition(args)}`,title:`Waits until ${text(args[1])} ${args[2]===undefined?'is 1 on the last outgoing link (0 on the others)':`= ${text(args[2])}`} before leaving on this link`};
     case'valveunion':{const members=args.map(list).filter(member=>enabled(member[0]));return {kind:'condition',text:`⏸ ${members.map(member=>text(member[1])).join(' | ')||'(none enabled)'}`,title:`Waits until any of: ${members.map(member=>`${text(member[1])} = ${member[2]===undefined?'1':text(member[2])}`).join(', ')}`}}
     case'valve_assign':return {kind:'assign',text:`→ ${text(args[0])} = ${text(args[1])}`,title:`Sets ${text(args[0])} = ${text(args[1])} when the unit departs here`};
     case'gate':return {kind:'gate',text:`gate ${args.map(text).join(', ')}`,title:`Only ${args.map(text).join(', ')} may use this connection`};

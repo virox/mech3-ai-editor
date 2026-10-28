@@ -60,7 +60,11 @@ describe('behavior graph helpers',()=>{
     expect(nodeCardLines(consumer('valve-shutdown',['bramp',['shutdown',['owens_01',0,1]]]))).toEqual(['Vehicle: owens_01','Arguments: 0, 1 (unproven)']);
     expect(nodeCardLines(consumer('valve-sound_once',['bramp',['sound_once',['com_mech',1]]]))).toEqual(['Sound once: com_mech','Value: 1']);
     expect(nodeCardLines(consumer('valve-teleport',['go',['teleport',['atlas',[1,2,3],90,1]]]))).toEqual(['Vehicle: atlas','Position: 1.000, 2.000, 3.000','Yaw: 90.000','State: 1']);
-    expect(nodeCardLines(consumer('net-condition',['valve',[1,'bramp']]))).toEqual(['Requires: bramp (target from link index)']);
+    const gate=(linkCount?:number,member:unknown[]=[1,'bramp'])=>({...consumer('net-condition',['valve',member]),properties:{linkCount:linkCount??null}});
+    expect(nodeCardLines(gate(1))).toEqual(['Requires: bramp = 1 (only exit)']);
+    expect(nodeCardLines(gate(3))).toEqual(['Requires: bramp = 1 on last exit, 0 on others']);
+    expect(nodeCardLines(gate(undefined))).toEqual(['Requires: bramp = 1 on last exit, 0 on others']);
+    expect(nodeCardLines(gate(3,[1,'bramp',1]))).toEqual(['Requires: bramp = 1']);
     expect(nodeCardLines(consumer('net-union',['valveunion',[[1,'bramp',1],[0,'truck_explode',1],[1,'gate_open']]]))).toEqual(['Any of: bramp = 1','Any of: truck_explode = 1 · disabled','Any of: gate_open = 1 (default)']);
     expect(nodeCardLines(consumer('net-assignment',['valve_assign',['destroy_truck_01',1]]))).toEqual([]);
     expect(nodeCardLines(consumer('objective-observer',[]))).toEqual([]);
@@ -76,6 +80,16 @@ describe('behavior graph helpers',()=>{
     const delay={...assignment,kind:'valve-delayupdate',ports:[read,write]};
     expect([portOffsetY(delay,0),portOffsetY(delay,1)]).toEqual([60,60]);
     expect([portOffsetY({...delay,ports:[write,{...write,id:'w2'}]},0),portOffsetY({...delay,ports:[write,{...write,id:'w2'}]},1)]).toEqual([60,90]);
+  });
+  it('isolates the union of every selected chain',()=>{
+    const second=structuredClone(graph);
+    second.nodes.push({...graph.nodes[0],id:'p2',ports:[{...graph.nodes[0].ports[0],id:'p2-port',channel:'other_channel'}]});
+    second.channels.push({id:'channel::other_channel',name:'other_channel',producerCount:1,consumerCount:0,layers:['mission']});
+    second.edges.push({...graph.edges[0],id:'p2-edge',from:'p2-port',to:'channel::other_channel'});
+    const options={allLoaded:true,search:'',layers:new Set<string>()};
+    const one=visibleIds(second,{...options,isolate:'p'}),both=visibleIds(second,{...options,isolate:['p','p2']});
+    expect(one.has('p2')).toBe(false);
+    expect(both.has('p')&&both.has('p2')&&both.has('channel::other_channel')).toBe(true);
   });
   it('isolates a complete connected chain',()=>expect([...connectedIds(graph,'p')].sort()).toEqual(['c','channel::m4factbrg','p']));
   it('continues an isolated chain across a network route edge',()=>{

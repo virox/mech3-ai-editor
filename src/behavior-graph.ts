@@ -60,6 +60,12 @@ function valveActionLines(node:ValveGraphNode):string[]{
   }
 }
 
+/** A bare `valve` waits for `current_index == link_count - 1`: 1 on the last exit, 0 on every other exit. */
+function derivedValveTarget(linkCount:Json|undefined){
+  if(linkCount===1)return' = 1 (only exit)';
+  return' = 1 on last exit, 0 on others';
+}
+
 // Network blocks carry [tag, value].
 function networkLines(node:ValveGraphNode):string[]{
   const value=list(recordValue(node,1));
@@ -67,7 +73,7 @@ function networkLines(node:ValveGraphNode):string[]{
   // `valveunion` member defaults to 1 (docs/editor-systems/ai-networks-and-regions.md).
   const condition=(member:unknown[],missing:string)=>`${text(member[1])}${member[2]===undefined?missing:` = ${text(member[2])}`}${enabled(member[0])?'':' · disabled'}`;
   switch(node.kind){
-    case'net-condition':return[`Requires: ${condition(value,' (target from link index)')}`];
+    case'net-condition':return[`Requires: ${condition(value,derivedValveTarget(node.properties.linkCount))}`];
     case'net-union':return value.map(member=>`Any of: ${condition(list(member),' = 1 (default)')}`);
     // The assigned channel is the card's output row.
     case'net-assignment':return[];
@@ -252,9 +258,10 @@ export function scopedNodeIds(graph:ValveGraphSnapshot,allLoaded:boolean):Set<st
   return ids;
 }
 
-export function visibleIds(graph:ValveGraphSnapshot,options:{allLoaded:boolean;search:string;layers:Set<string>;isolate?:string}):Set<string>{
+export function visibleIds(graph:ValveGraphSnapshot,options:{allLoaded:boolean;search:string;layers:Set<string>;isolate?:string|string[]}):Set<string>{
   const scoped=scopedNodeIds(graph,options.allLoaded);
-  const isolated=options.isolate?connectedIds(graph,options.isolate):undefined;
+  const starts=options.isolate===undefined?[]:[options.isolate].flat();
+  const isolated=starts.length?new Set(starts.flatMap(start=>[...connectedIds(graph,start)])):undefined;
   const query=options.search.trim().toLowerCase();
   const visible=new Set<string>();
   for(const node of graph.nodes){

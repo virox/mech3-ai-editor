@@ -154,7 +154,7 @@ record-count field: the even-length pair list is the count.
 
 | Value | Name | Meaning | Practical use | Evidence / notes |
 |---|---|---|---|---|
-| `delayupdate` | delayed valve update | Schedules an update of another named valve. | Delay a line, route change, or follow-on event. | **Confirmed layout.** `[valve, seconds]`; no explicit output value is serialized. c1m1 shows `bramp` leading to `truck_go` after 18 seconds. |
+| `delayupdate` | delayed valve update | Schedules an update of another named valve. | Delay a line, route change, or follow-on event. | **Confirmed layout and runtime.** `[valve, seconds]`; no output value is serialized because none is needed: on every change of the record's own channel, the current value of that channel is captured and written to `valve` after `seconds` (see `aiv-research/valve-action-runtime.md`). c1m1 shows `bramp` 0→1 leading to `truck_go` 0→1 after exactly 18 seconds. |
 | `sound` | sound action | Dispatches a named sound action. | Reusable dialogue/feedback. | **Confirmed layout.** `[sound_name, state]`; corpus uses state `1`. |
 | `sound_once` | one-shot sound action | Dispatches a one-shot sound action. | One-time dialogue/feedback. | **Confirmed layout.** Same payload shape as `sound`. |
 | `destroy` | vehicle action | Targets an AIV vehicle for destruction. | Trigger a destruction sequence from a valve. | **Confirmed layout.** `[vehicle_name, state]`; observed state is `1`. |
@@ -388,10 +388,15 @@ derived channels. No general “call valve by index” or arbitrary nested valve
 format was found. Do not create circular delayed/aggregate relationships;
 their behaviour has not been tested.
 
+`delayupdate` forwards every change, not only `0 → 1`: if the trigger channel
+is later reset to `0`, the target is also set to `0` after the same delay.
+Each change starts its own timer; pending timers are not cancelled, so a
+quick `0 → 1 → 0` on the trigger produces the same two writes on the target,
+shifted by the delay. A write that does not change the target's value causes
+no further notification.
+
 ### Open questions that affect modding
 
-- The exact value-propagation rule inside `delayupdate` is not fully recovered;
-  only its target channel and delay are serialized.
 - The middle number in `shutdown`, and the effect of state values other than
   the observed `1` in several action types, are not fully documented.
 - The exact outcome of combining multiple threshold/candidate flags in one

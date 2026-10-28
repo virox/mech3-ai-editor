@@ -18,7 +18,9 @@
   const selectedChannel=()=>graph().channels.find(channel=>channelNodeId(channel.name)===selectedId);
   let layerNameList=$derived.by(()=>[...new Set(graph().nodes.map(node=>node.layer))]);
   let activeLayerSet=$derived.by(()=>new Set(layers));
-  let visibleIdSet=$derived.by(()=>visibleIds(graph(),{allLoaded,search,layers:activeLayerSet,isolate:isolate&&selectedId?selectedId:undefined}));
+  let isolateStarts=$state<string[]>([]);
+  let selectionStarts=$derived(selectedIds.length?selectedIds:selectedId?[selectedId]:[]);
+  let visibleIdSet=$derived.by(()=>visibleIds(graph(),{allLoaded,search,layers:activeLayerSet,isolate:isolate?isolateStarts:undefined}));
   let visibleNodeList=$derived.by(()=>graph().nodes.filter(node=>visibleIdSet.has(node.id)));
   let visibleChannelList=$derived.by(()=>graph().channels.filter(channel=>visibleIdSet.has(channelNodeId(channel.name))));
   let visibleEdgeList=$derived.by(()=>graph().edges.filter(edge=>visibleIdSet.has(endpointNodeId(graph(),edge.from))&&visibleIdSet.has(endpointNodeId(graph(),edge.to))));
@@ -93,7 +95,7 @@
   <section class="behavior-workspace">
     <div class="behavior-toolbar">
       <div><small>{graph().scopeKey.toUpperCase()||'MISSION'}</small><h2>Behavior Graph</h2></div>
-      <div class="graph-tools"><input placeholder="Search channels and blocks…" bind:value={search}><label><input type="checkbox" bind:checked={allLoaded}> All loaded channels</label><button class:active={isolate} disabled={!selectedId} onclick={()=>isolate=!isolate}>Isolate chain</button><button disabled={!undoStack.length||busy} onclick={undo}>Undo</button><button disabled={!redoStack.length||busy} onclick={redo}>Redo</button><div class="zoom-controls"><button title="Zoom out" onclick={()=>zoomAt(1.22)}>−</button><span>{Math.round(1500/viewWidth*100)}%</span><button title="Zoom in" onclick={()=>zoomAt(.82)}>+</button><button onclick={()=>fitView()}>Fit</button><button onclick={()=>{positions=autoLayout(graph());persistPositions();fitView()}}>Auto-layout</button></div></div>
+      <div class="graph-tools"><input placeholder="Search channels and blocks…" bind:value={search}><label><input type="checkbox" bind:checked={allLoaded}> All loaded channels</label><button class:active={isolate} disabled={!isolate&&!selectionStarts.length} onclick={()=>{isolate=!isolate;isolateStarts=isolate?[...selectionStarts]:[]}}>Isolate chain{isolate&&isolateStarts.length>1?` (${isolateStarts.length})`:''}</button><button disabled={!undoStack.length||busy} onclick={undo}>Undo</button><button disabled={!redoStack.length||busy} onclick={redo}>Redo</button><div class="zoom-controls"><button title="Zoom out" onclick={()=>zoomAt(1.22)}>−</button><span>{Math.round(1500/viewWidth*100)}%</span><button title="Zoom in" onclick={()=>zoomAt(.82)}>+</button><button onclick={()=>fitView()}>Fit</button><button onclick={()=>{positions=autoLayout(graph());persistPositions();fitView()}}>Auto-layout</button></div></div>
     </div>
     <div class="layer-filter"><span>Layers:</span>{#each layerNames() as layer}<button class:active={!layers.length||layers.includes(layer)} onclick={()=>toggleLayer(layer)}>{layer}</button>{/each}<span class="graph-count">{visibleNodes().length} blocks · {visibleChannels().length} channels{selectedIds.length>1?` · ${selectedIds.length} selected`:''}</span></div>
     {#if message}<div class="graph-message">{message}<button aria-label="Dismiss message" onclick={()=>message=''}>×</button></div>{/if}
