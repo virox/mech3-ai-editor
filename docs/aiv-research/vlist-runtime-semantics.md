@@ -110,6 +110,19 @@ weights `1.0` (`+0x3a4`), `0.5` (`+0x38c`, `+0x390`), `0.2` (`+0x394`,
 component health comes from its own `vtable+0x48`. The mapping of those
 offsets to torso, arms, and legs is not established.
 
+For vehicles (vtables `0x5c8460`, which loads `vehicle.zrd`, and `0x5c88e8`),
+`method_98` is `0x4ad820`: `[[this+0xe4]+0x744] / [[this+0xe4]+0x740]`, i.e.
+current over maximum health. `FUN_004acbc0` reads the `vehicle.zrd` key
+`health` (string `0x5e8600`) into both fields. The damage handler
+`FUN_004ad3f0` subtracts the damage from `+0x744` and destroys the vehicle at
+`<= 0`; `FUN_004ad2d0` sets `+0x744` to `0`. The value is therefore
+continuous, not a destroyed/intact flag.
+
+Example: `ttruck` has `health [20.0]`. The C1M1 `ttruck_01`/`ttruck_02` row
+Health `0.999` → `truck_explode = 1` fires as soon as the truck has lost more
+than 0.02 points, i.e. on the first hit, not only when it explodes. The
+channel name describes the designer's intent, not the condition.
+
 ## Live verification (C1M1, `Mech3.exe 1.2.22`)
 
 `owens_01` has two rows: Health `0.8` → `firefly_retreat = 1`, and Health

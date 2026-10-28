@@ -72,13 +72,25 @@ function networkLines(node:ValveGraphNode):string[]{
   // A bare `valve` derives its target from the outgoing-link index; a bare
   // `valveunion` member defaults to 1 (docs/editor-systems/ai-networks-and-regions.md).
   const condition=(member:unknown[],missing:string)=>`${text(member[1])}${member[2]===undefined?missing:` = ${text(member[2])}`}${enabled(member[0])?'':' · disabled'}`;
+  const context=list(node.properties.nodeTags).map(entry=>`Also here: ${nodeTagText(list(entry))}`);
   switch(node.kind){
-    case'net-condition':return[`Requires: ${condition(value,derivedValveTarget(node.properties.linkCount))}`];
-    case'net-union':return value.map(member=>`Any of: ${condition(list(member),' = 1 (default)')}`);
+    case'net-condition':return[`Requires: ${condition(value,derivedValveTarget(node.properties.linkCount))}`,...context];
+    case'net-union':return[...value.map((member,index)=>`${index?'or':'Any of:'} ${condition(list(member),' = 1 (default)')}`),...context];
     // The assigned channel is the card's output row.
-    case'net-assignment':return[];
+    case'net-assignment':return context;
     default:return[];
   }
+}
+
+// `[enabled, parameter]` tags (FUN_004db1b0): wait_interval [1, 1.0] is an enabled one-second interval.
+const ENABLED_PARAMETER_TAGS=new Set(['speed','wait_interval','wait_time','canleave','scan_aim','scan_hit','scan_time','jump']);
+function nodeTagText([tag,value]:unknown[]){
+  const args=list(value);
+  if(ENABLED_PARAMETER_TAGS.has(String(tag))&&args.length===2){
+    const unit=String(tag).startsWith('wait_')||tag==='scan_time'?' s':'';
+    return `${String(tag)} ${text(args[1])}${unit}${enabled(args[0])?'':' · disabled'}`;
+  }
+  return `${String(tag)} ${args.map(text).join(', ')}`;
 }
 
 function animationCallbackLines(node:ValveGraphNode):string[]{

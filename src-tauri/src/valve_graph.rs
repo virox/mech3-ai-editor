@@ -867,6 +867,21 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
         // Outgoing links of a spatial node; a bare `valve` target is derived from them.
         let link_count = if spatial { record.get(2).and_then(Value::as_array).map(Vec::len) } else { None };
         let mut tag_index = if spatial { 3 } else { 1 };
+        // Non-channel tags on the same node or link (wait_interval, speed, gate, ...),
+        // shown as context on its channel cards.
+        let node_tags: Vec<Value> = record
+            .get(tag_index..)
+            .unwrap_or_default()
+            .chunks(2)
+            .filter_map(|pair| match pair {
+                [Value::String(tag), value]
+                    if !matches!(tag.as_str(), "valve" | "valveunion" | "valve_assign") =>
+                {
+                    Some(json!([tag, value]))
+                }
+                _ => None,
+            })
+            .collect();
         while tag_index + 1 < record.len() {
             let Some(tag) = record[tag_index].as_str() else {
                 tag_index += 2;
@@ -982,7 +997,7 @@ fn collect_network(builder: &mut Builder<'_>, document: &WorkspaceDocument) {
                     "slice",
                 ),
                 ports,
-                properties: json!({"tag":tag,"node":node_key,"spatial":spatial,"linkCount":link_count}),
+                properties: json!({"tag":tag,"node":node_key,"spatial":spatial,"linkCount":link_count,"nodeTags":node_tags}),
                 native_record,
             });
             tag_index += 2;

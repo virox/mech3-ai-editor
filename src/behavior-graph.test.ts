@@ -65,8 +65,10 @@ describe('behavior graph helpers',()=>{
     expect(nodeCardLines(gate(3))).toEqual(['Requires: bramp = 1 on last exit, 0 on others']);
     expect(nodeCardLines(gate(undefined))).toEqual(['Requires: bramp = 1 on last exit, 0 on others']);
     expect(nodeCardLines(gate(3,[1,'bramp',1]))).toEqual(['Requires: bramp = 1']);
-    expect(nodeCardLines(consumer('net-union',['valveunion',[[1,'bramp',1],[0,'truck_explode',1],[1,'gate_open']]]))).toEqual(['Any of: bramp = 1','Any of: truck_explode = 1 · disabled','Any of: gate_open = 1 (default)']);
+    expect(nodeCardLines(consumer('net-union',['valveunion',[[1,'bramp',1],[0,'truck_explode',1],[1,'gate_open']]]))).toEqual(['Any of: bramp = 1','or truck_explode = 1 · disabled','or gate_open = 1 (default)']);
     expect(nodeCardLines(consumer('net-assignment',['valve_assign',['destroy_truck_01',1]]))).toEqual([]);
+    const waiting={...consumer('net-union',['valveunion',[[1,'bramp',1]]]),properties:{nodeTags:[['wait_interval',[1,1.0]],['speed',[0,5]],['gate',['ttruck_01']]]}};
+    expect(nodeCardLines(waiting)).toEqual(['Any of: bramp = 1','Also here: wait_interval 1 s','Also here: speed 5 · disabled','Also here: gate ttruck_01']);
     expect(nodeCardLines(consumer('objective-observer',[]))).toEqual([]);
   });
   it('gives every producer the same output row with its write port beside it',()=>{
