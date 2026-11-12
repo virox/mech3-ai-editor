@@ -1215,22 +1215,26 @@ fn mission_key(selected_mission: &str) -> String {
     stem.strip_prefix("reader").unwrap_or(&stem).to_owned()
 }
 
-fn objective_scopes<'a>(root: &'a Value, key: &str) -> Vec<(Vec<usize>, &'a Value)> {
+/// Returns the objective scopes of the selected mission with the file's own key
+/// for each (`m4`, or the staged `m32`, `m33`, ...). A file without an entry
+/// for the mission yields no scopes rather than the whole file.
+fn objective_scopes<'a>(root: &'a Value, key: &str) -> Vec<(Vec<usize>, &'a Value, &'a str)> {
     let Some((list, root_path)) = pair_list_with_path(root) else {
-        return vec![(vec![], root)];
+        return vec![];
     };
     for index in (0..list.len().saturating_sub(1)).step_by(2) {
-        if list[index]
+        if let Some(name) = list[index]
             .as_str()
-            .is_some_and(|name| name.eq_ignore_ascii_case(key))
+            .filter(|name| name.eq_ignore_ascii_case(key))
         {
             return vec![(
                 [root_path.as_slice(), &[index + 1]].concat(),
                 &list[index + 1],
+                name,
             )];
         }
     }
-    let staged = (0..list.len().saturating_sub(1))
+    (0..list.len().saturating_sub(1))
         .step_by(2)
         .filter_map(|index| {
             let name = list[index].as_str()?;
@@ -1242,25 +1246,13 @@ fn objective_scopes<'a>(root: &'a Value, key: &str) -> Vec<(Vec<usize>, &'a Valu
                 Some((
                     [root_path.as_slice(), &[index + 1]].concat(),
                     &list[index + 1],
+                    name,
                 ))
             } else {
                 None
             }
         })
-        .collect::<Vec<_>>();
-    if staged.is_empty() {
-        let scope = if root
-            .as_array()
-            .is_some_and(|array| array.len() == 1 && array[0].is_array())
-        {
-            &root[0]
-        } else {
-            root
-        };
-        vec![(root_path, scope)]
-    } else {
-        staged
-    }
+        .collect()
 }
 
 fn objective_text(record: &[Value], tag: &str) -> String {
@@ -1285,11 +1277,18 @@ fn collect_objective_array(
     locked: bool,
     value: &Value,
     path: Vec<usize>,
+    scope_key: &str,
     phase: &str,
     host_counter: &mut usize,
 ) {
     let Some(array) = value.as_array() else {
         return;
+    };
+    // Labels are the file's own keys leading to the record (`m33 · fail`).
+    let key_path = if phase.is_empty() {
+        scope_key.to_owned()
+    } else {
+        format!("{scope_key} · {phase}")
     };
     let proven_list = array
         .chunks_exact(2)
@@ -1300,10 +1299,10 @@ fn collect_objective_array(
         builder.add_host(
             document,
             "objective-list",
-            format!("{} · {}", phase, document.entry_name),
+            format!("{key_path} · {}", document.entry_name),
             path.clone(),
             &format!("objective:{phase}:{host_id}"),
-            json!({"phase":phase}),
+            json!({"phase":phase,"scope":scope_key}),
         );
     }
     let mut index = 0;
@@ -1321,6 +1320,7 @@ fn collect_objective_array(
                 locked,
                 &array[index + 1],
                 child_path,
+                scope_key,
                 tag,
                 host_counter,
             );
@@ -1367,7 +1367,7 @@ fn collect_objective_array(
                     subtitle: {
                         let description = objective_text(array, "desc");
                         if description.is_empty() {
-                            format!("{} objective action", if phase.is_empty() { "mission" } else { phase })
+                            key_path.clone()
                         } else {
                             description
                         }
@@ -1403,6 +1403,7 @@ fn collect_objective_array(
                     )],
                     properties: json!({
                         "phase":phase,
+                        "scope":scope_key,
                         "description":objective_text(array,"desc"),
                         "nav":objective_text(array,"nav"),
                         "channel":channel,
@@ -1467,14 +1468,7 @@ fn collect_objective_array(
                         id: node_id.clone(),
                         kind: "objective-observer".into(),
                         category: "consumer".into(),
-                        label: if phase == "fail" {
-                            "Mission failure".into()
-                        } else {
-                            format!(
-                                "{} objective",
-                                if phase.is_empty() { "mission" } else { phase }
-                            )
-                        },
+                        label: key_path.clone(),
                         subtitle: objective_text(record, "desc"),
                         layer: document.layer.clone(),
                         locked,
@@ -1507,6 +1501,7 @@ fn collect_objective_array(
                         )],
                         properties: json!({
                             "phase":phase,
+                            "scope":scope_key,
                             "description":objective_text(record,"desc"),
                             "nav":objective_text(record,"nav"),
                             "value":requested
@@ -1534,6 +1529,7 @@ fn collect_objective_array(
                 locked,
                 child,
                 child_path,
+                scope_key,
                 phase,
                 host_counter,
             );
@@ -1553,7 +1549,20 @@ fn collect_objectives(
     let archive_path = archive_path.to_owned();
     let key = mission_key(selected_mission);
     let mut counter = 0;
-    for (path, scope) in objective_scopes(&document.root, &key) {
+    let scopes = objective_scopes(&document.root, &key);
+    if scopes.is_empty() {
+        builder.diagnostic(
+            "info",
+            "no-mission-objectives",
+            format!(
+                "{} has no objectives for mission '{key}'",
+                document.entry_name
+            ),
+            None,
+            Some(document.id.clone()),
+        );
+    }
+    for (path, scope, scope_key) in scopes {
         collect_objective_array(
             builder,
             document,
@@ -1561,6 +1570,7 @@ fn collect_objectives(
             locked,
             scope,
             path,
+            scope_key,
             "",
             &mut counter,
         );
@@ -2939,6 +2949,99 @@ mod tests {
             .nodes
             .iter()
             .any(|node| node.ports.iter().any(|port| port.channel == "outside_c3m3")));
+    }
+
+    #[test]
+    fn objective_labels_are_the_file_key_path() {
+        // Staged missions repeat the same fail observer in every stage.
+        let fail = json!([
+            "valve_change",
+            [
+                "desc",
+                ["MSG_OBJ_FAILED_TO_HOLD_POSITION"],
+                "valve",
+                ["fired_mgun"],
+                "value",
+                [1]
+            ]
+        ]);
+        let objectives = document(
+            "objectives",
+            "base",
+            "objectives.zrd",
+            "objectives",
+            "campaign-base",
+            json!([[
+                "m32",
+                [
+                    "primary",
+                    ["valve_change", ["valve", ["mech_hit"], "value", [1]]],
+                    "fail",
+                    fail.clone()
+                ],
+                "m33",
+                ["fail", fail]
+            ]]),
+        );
+        let graph = build_valve_graph(
+            &[objectives.clone()],
+            &[archive("base", "campaign-base", true)],
+            "C:/MW3/zbd/t1/readerm3.zbd",
+        );
+        let mut labels = graph
+            .nodes
+            .iter()
+            .filter(|node| node.kind == "objective-observer")
+            .map(|node| node.label.as_str())
+            .collect::<Vec<_>>();
+        labels.sort_unstable();
+        assert_eq!(labels, ["m32 · fail", "m32 · primary", "m33 · fail"]);
+        assert!(
+            graph
+                .hosts
+                .iter()
+                .any(|host| host.label == "m32 · primary · objectives.zrd")
+        );
+
+        // A mission without an entry gets no objective cards, not the whole file.
+        let graph = build_valve_graph(
+            &[objectives],
+            &[archive("base", "campaign-base", true)],
+            "C:/MW3/zbd/t1/readermp1.zbd",
+        );
+        assert!(
+            !graph
+                .nodes
+                .iter()
+                .any(|node| node.kind == "objective-observer")
+        );
+        assert!(
+            graph
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.code == "no-mission-objectives")
+        );
+
+        let objectives = document(
+            "objectives",
+            "base",
+            "objectives.zrd",
+            "objectives",
+            "campaign-base",
+            json!([[
+                "m4",
+                [
+                    "fail",
+                    ["valve_change", ["valve", ["outside_c3m4"], "value", [1]]]
+                ]
+            ]]),
+        );
+        let graph = build_valve_graph(
+            &[objectives],
+            &[archive("base", "campaign-base", true)],
+            "C:/MW3/zbd/c3/readerm4.zbd",
+        );
+        assert!(graph.nodes.iter().any(|node| node.label == "m4 · fail"));
     }
 
     #[test]

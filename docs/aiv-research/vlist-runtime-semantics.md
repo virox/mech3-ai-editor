@@ -196,7 +196,31 @@ original condition names are `Ammo`, `Fired on`, `Health`, `Heat`, `Enters`,
 `Exits`, `Target LOS`, and `Target Distance`. Index 15 is the named `Valve`,
 index 14 is `Active`, and index 0 selects `close (zero)` versus `open (one)`.
 
+## Ammo trigger: owner and subject (partial)
+
+`FUN_004d9290` loops the list and calls the evaluator for each row. It is
+reached only from two thunks, `FUN_004d8990` and `FUN_004e94f0`. Both are
+virtual methods of classes with virtual bases. They pass `owner` as a
+virtual-base sub-object of themselves and `subject` as the pointer stored at
+`+0x10` of that base. The binary has no RTTI class names (only `type_info`), so
+neither class is named yet.
+
+The Health trigger reads `subject->method_98()`, and Health is live-verified to
+measure the row's own vehicle (Owens' row fires on Owens' health). The Ammo
+trigger, `owner->method_9c(subject)` at `0x4d8f02`, passes that same
+`subject`. Ammo therefore concerns the row's **own** vehicle, evaluated through
+the `owner` object, not the player's ammunition. Unresolved: the concrete
+`owner` class and whether `method_9c` returns a total ammunition fraction or
+only covers some weapons.
+
+Example: T1M3 `bushwacker_02` (the target mech) has Ammo `0.999` →
+`fired_mgun = 1`. The channel reports the target mech using ammunition,
+not the player.
+
 ## Next static targets
 
 1. Determine whether index 14 (`Active`) is consumed by another
    list path.
+2. Name the `owner` class of the Ammo trigger (find the constructors that
+   install the vtables holding `FUN_004d8990` and `FUN_004e94f0`) and decompile
+   its `vtable+0x9c`. A live breakpoint on `0x4d8f07` would answer it faster.

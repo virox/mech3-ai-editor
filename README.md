@@ -81,7 +81,7 @@ Checks against the installed game:
 ```powershell
 npm run check
 npm run build
-$env:MW3_TEST_ROOT='C:\Games\MW Clean\MechWarrior_3_(USA)'
+$env:MW3_TEST_ROOT='C:\Games\MechWarrior_3_(USA)'
 $env:MW3_TEST_READER="$env:MW3_TEST_ROOT\zbd\c1\readerm1.zbd"
 cd src-tauri
 cargo test

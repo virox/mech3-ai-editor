@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeCardRows,nodeIsActive,nodeOutputLine,portOffsetY,portsCompatible,translatePositions,visibleIds,wrapCardLine} from './behavior-graph';
+import {MAX_AUTO_LAYOUT_ROWS,autoLayout,channelNodeId,endpointNodeId,groupNetworkNodes,compileDraft,connectedIds,cycleNodeIds,draftError,intersectsRect,mergePositions,newDraft,nodeCardHeight,nodeCardLines,nodeCardRows,nodeIsActive,nodeOutputLine,portOffsetY,portsCompatible,translatePositions,visibleIds,wrapCardLine} from './behavior-graph';
 import type {Json,ValveGraphHost,ValveGraphSnapshot} from './types';
 
 const graph:ValveGraphSnapshot={scopeKey:'m4',nodes:[
@@ -117,4 +117,29 @@ describe('behavior graph helpers',()=>{
   it('places existing cycles in a separate lower lane',()=>{const cyclic=structuredClone(graph);cyclic.nodes.push({...cyclic.nodes[0],id:'loop',kind:'derived-state',category:'logic',order:7,ports:[{...cyclic.nodes[1].ports[0],id:'loop-in',channel:'m4factbrg'},{...cyclic.nodes[0].ports[0],id:'loop-out',channel:'m4factbrg'}]});expect(cycleNodeIds(cyclic).has('loop')).toBe(true);expect(autoLayout(cyclic).loop.y).toBeGreaterThan(autoLayout(graph).c.y)});
   it('rectangle-selects intersecting nodes and translates a selected group',()=>{expect(intersectsRect({x:100,y:100},{w:220,h:104},{x:250,y:150,w:80,h:80})).toBe(true);expect(intersectsRect({x:100,y:100},{w:50,h:50},{x:200,y:200,w:20,h:20})).toBe(false);expect(translatePositions({a:{x:10,y:20},b:{x:30,y:40},c:{x:50,y:60}},{a:{x:10,y:20},c:{x:50,y:60}},7,-3)).toEqual({a:{x:17,y:17},b:{x:30,y:40},c:{x:57,y:57}})});
   it('places a newly discovered locked node outside persisted node positions',()=>{const expanded=structuredClone(graph);expanded.nodes.push({...expanded.nodes[0],id:'locked-producer',label:'Locked producer',layer:'campaign-base',locked:true,order:3,ports:[{...expanded.nodes[0].ports[0],id:'locked-port',channel:'locked-output'}]});expanded.channels.push({id:'channel::locked-output',name:'locked-output',producerCount:1,consumerCount:0,layers:['campaign-base']});const automatic=autoLayout(expanded),saved={p:{...automatic['locked-producer']}};const merged=mergePositions(expanded,saved);expect(merged.p).toEqual(saved.p);expect(intersectsRect(merged['locked-producer'],{w:220,h:104},{x:saved.p.x,y:saved.p.y,w:220,h:104})).toBe(false)});
+});
+
+describe('network grouping',()=>{
+  const net=(id:string,record:Json,extra:Record<string,Json>={})=>({...graph.nodes[1],id,kind:'net-condition',category:'consumer' as const,label:'Network valve condition',subtitle:`net_03.zrd · ${id}`,layer:'mission',locked:false,binding:{...graph.nodes[1].binding,documentId:'net_03.zrd',entryName:'net_03.zrd'},ports:[{...graph.nodes[1].ports[0],id:`${id}:port:0`,direction:'read' as const,channel:'valley4'}],properties:{linkCount:1,...extra},nativeRecord:['valve',record]});
+  const source:ValveGraphSnapshot={...graph,nodes:[net('a',[1,'valley4',0]),net('b',[1,'valley4',0],{nodeTags:[['wait_time',2]]}),net('c',[1,'valley4',1]),net('d',[1,'valley30'],{linkCount:1}),net('e',[1,'valley30'],{linkCount:2})],
+    channels:[{id:'channel::valley4',name:'valley4',producerCount:0,consumerCount:3,layers:['mission']}],
+    edges:['a','b','c'].map(id=>({id:`e-${id}`,from:'channel::valley4',to:`${id}:port:0`,channel:'valley4'}))};
+  it('merges identical records of one document and keeps the rest',()=>{
+    const {graph:view,members}=groupNetworkNodes(source);
+    expect(view.nodes.map(node=>node.label)).toEqual(['Network valve condition ×2','Network valve condition','Network valve condition','Network valve condition']);
+    const group=view.nodes[0];
+    expect(members.get(group.id)?.map(node=>node.id)).toEqual(['a','b']);
+    expect(group.properties.nodeTags).toEqual([]);
+    expect(view.edges.map(edge=>edge.to)).toEqual([`${group.id}:port:0`,'c:port:0']);
+    expect(endpointNodeId(view,`${group.id}:port:0`)).toBe(group.id);
+  });
+  it('separates bare valves whose link count derives a different target',()=>{
+    const {graph:view}=groupNetworkNodes(source);
+    expect(view.nodes.filter(node=>['d','e'].includes(node.id))).toHaveLength(2);
+  });
+  it('leaves the source snapshot untouched',()=>{
+    const before=JSON.stringify(source);
+    groupNetworkNodes(source);
+    expect(JSON.stringify(source)).toBe(before);
+  });
 });

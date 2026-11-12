@@ -97,3 +97,55 @@ fit that reading; who writes it was not traced.
 
 The `1 → 0` forwarding follows from the code above; it was not observed live,
 because no C1M1 trigger channel is reset to `0` during the trace.
+
+# `sound` and `sound_once`
+
+Static analysis only (same build); not yet observed live.
+
+## Parsing
+
+`FUN_004e2330` reads both keys into the same slot of the action block: the
+sound name at `+0x08` and the value at `+0x0c` (`"sound"` at `0x4e2872`,
+`"sound_once"` at `0x4e28c4`). `sound_once` additionally sets the byte
+`+0x10 = 1`. The value is an integer compared against the channel, not a
+volume.
+
+`FUN_004e44b0` creates `FUN_004e2ff0` (`sound`, vtable `0x5cd458`) when
+`+0x10 == 0`, otherwise `FUN_004e3070` (`sound_once`, vtable `0x5cd468`), and
+attaches it to the record's own channel with `FUN_004d4310`.
+
+## Action object
+
+| Offset | Content |
+|---:|---|
+| `+0x04` | Sound handle from `FUN_0056f6f0(name)`. |
+| `+0x08` | Value from the record. |
+
+Change handler `vtable+0x08`:
+
+```c
+// sound, 0x4e3040
+if (trigger_wrapper->storage->get() == this->value)
+    FUN_0056e7e0(this->sound, /*edx*/ 0, 1.0f, 0);
+
+// sound_once, 0x4e30b0
+if (trigger_wrapper->storage->get() == this->value && this->sound != NULL) {
+    FUN_0056e7e0(this->sound, 0, 1.0f, 0);
+    this->sound = NULL;                        // never plays again
+}
+```
+
+`FUN_0056e7e0` is read as "play" because it receives the handle resolved from
+the sound name; its own body was not traced.
+
+## Result
+
+Unlike `delayupdate`, both sound actions compare the channel's **new** value
+with the record value. Because notifications only happen on a change
+(`FUN_004d3c00`), `sound [name, 1]` plays on every transition **to** 1 and
+stays silent on transitions away from it. `sound_once` plays on the first such
+transition per mission load only.
+
+Example: T1M3 `inside_t1m3 → sound [out_of_bounds, 1]`. The player's VList
+writes 1 when outside `reg_inside_t1m3` and 0 when inside, so the warning
+plays each time the player leaves the area, not when they return.

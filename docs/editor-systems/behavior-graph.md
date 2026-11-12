@@ -40,9 +40,32 @@ Reader archive.
 
 The default mission view includes every mission-layer occurrence and every
 connected occurrence from loaded campaign, global, and attached layers.
-Campaign objectives are projected only from the selected mission subtree.
+Campaign objectives are projected only from the selected mission subtree: the
+top-level key named after the mission (`m4`, `mp1`), or its numbered stages
+(T1M3: `m31`..`m326`). A file without such a key contributes nothing and
+reports `no-mission-objectives`. Objective cards and hosts are labelled with the
+file's own key path to the record (`m33 · fail`, `m4 · primary`); the subtitle
+is the record's `desc` resource key.
 `All loaded channels` broadens this view. Search, layer filters, and selected-
 chain isolation affect presentation only.
+
+**Group network records** (on by default) shows the network records of one
+`net_*.zrd` that would produce identical cards (same kind, native record,
+layer and lock state; for a bare `valve`, also the link count that derives its
+target) as one card labelled `×N`. C3M3 `net_03` has 100 copies of
+`valve [1, m3n3valley4, 0]` alone; grouping reduces that mission from 840 to
+258 cards. Grouping is display-only: the group's inspector lists every record
+(with its node and any `Also here` tags), and selecting one opens the normal
+single-record inspector for editing. Group ports cannot be wired.
+
+Only cards and edges inside the visible area are drawn. Below 25 % on-screen
+scale, cards become plain boxes and edges lose arrows and tooltips; zoom in to
+read or wire them. The minimap shows the bounds of all visible cards.
+While the view is dragged, edges are drawn without anti-aliasing and arrows.
+While the mouse wheel turns, the canvas is scaled as a whole and card text is
+hidden; both are redrawn about 0.16 s after the wheel rests. Re-laying out the
+SVG text on every pan or zoom step was the cause of the lag (measured in
+WebView2 on C3M3).
 
 ## Confirmed native compilation mapping
 

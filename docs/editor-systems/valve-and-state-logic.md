@@ -87,8 +87,8 @@ arguments are deliberately left technical.
 | Action | Serialized form in the corpus | What is established |
 |---|---|---|
 | `delayupdate` | [`"delayupdate"`, [channel, seconds]] | A delayed update is scheduled for the named channel. The action supplies the update value; no extra value is serialized in this form. |
-| `sound` | [`"sound"`, [sound_name, value]] | Plays/dispatches the named sound when the outer channel rule fires. |
-| `sound_once` | [`"sound_once"`, [sound_name, value]] | One-shot sound action; the same sound/value payload shape is used. |
+| `sound` | [`"sound"`, [sound_name, value]] | Plays the named sound each time the channel changes **to** `value` (`0x4e3040`; see `aiv-research/valve-action-runtime.md`). |
+| `sound_once` | [`"sound_once"`, [sound_name, value]] | Like `sound`, but plays only on the first change to `value`; the handle is then cleared (`0x4e30b0`). |
 | `shutdown` | [`"shutdown"`, [vehicle, number, number]] | Targets an AIV vehicle. The first number and final state/enable number are passed to the vehicle action; their historical captions are not yet proven. |
 | `destroy` | [`"destroy"`, [vehicle, state]] | Targets an AIV vehicle and is observed with state `1`. |
 | `teleport` | [`"teleport"`, [vehicle, [x,y,z], yaw, state]] | Targets an AIV vehicle and carries a position, yaw, and final state/enable value. |

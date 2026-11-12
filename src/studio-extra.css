@@ -459,10 +459,17 @@ main.mission-collapsed {
 .behavior-canvas { position: relative; min-width: 0; min-height: 620px; overflow: hidden; background: #081115; }
 .behavior-canvas > svg { display: block; width: 100%; height: 100%; min-height: 620px; user-select: none; touch-action: none; cursor: grab; }
 .behavior-canvas > svg.panning { cursor: grabbing; }
+.behavior-canvas > svg.zooming { transform-origin: 0 0; will-change: transform; }
+/* Chromium re-shapes every SVG text when the scale changes, even under a CSS transform; hide card text until the wheel rests. */
+.behavior-canvas > svg.zooming text { display: none; }
+/* Anti-aliasing hundreds of long edges was the per-frame cost while dragging the view; draw them plain until the drag ends. */
+.behavior-canvas > svg.panning path.behavior-edge { shape-rendering: optimizeSpeed; marker-end: none; }
 .behavior-canvas > svg.selecting { cursor: crosshair; }
 .behavior-edge { fill: none; stroke: #65818a; stroke-width: 2.2; vector-effect: non-scaling-stroke; opacity: .72; }
 .behavior-edge.draft-wire { stroke: #f08a60; stroke-dasharray: 7 5; pointer-events: none; }
 .behavior-edge.route { stroke: #8fb7a2; stroke-dasharray: 3 5; opacity: .85; }
+/* Zoomed far out: solid thin lines, no dashes. */
+.behavior-edge.low-detail { stroke-width: 1; stroke-dasharray: none; opacity: .5; }
 .behavior-edge + * { marker-fill: #65818a; }
 .selection-marquee { fill: #4ca7c326; stroke: #70bed4; stroke-width: 1.5; stroke-dasharray: 7 4; vector-effect: non-scaling-stroke; pointer-events: none; }
 
@@ -509,9 +516,11 @@ main.mission-collapsed {
 }
 
 .behavior-minimap svg { width: 100%; height: 100%; }
-.behavior-minimap path { fill: none; stroke: #476069; stroke-width: 5; }
 .behavior-minimap rect { fill: #29414a; }
-.behavior-minimap .mini-view { fill: none; stroke: #e17a52; stroke-width: 7; }
+.behavior-minimap .mini-view { fill: none; stroke: #e17a52; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.group-members { display: grid; gap: 4px; max-height: 360px; overflow: auto; }
+.group-members button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 6px 8px; font-size: 11px; }
+.group-members small { color: #8fa3aa; font-size: 10px; }
 .graph-legend { position: absolute; left: 10px; bottom: 8px; display: flex; gap: 12px; color: #81959c; font-size: 9px; pointer-events: none; }
 .graph-legend em { color: #9eb1b7; font-style: normal; }
 .graph-legend span::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; background: #727b7f; }

@@ -30,7 +30,55 @@ export function translatePositions(positions:GraphPositions,origins:GraphPositio
 const categoryColumn:Record<string,number>={producer:0,channel:1,logic:2,consumer:3,unknown:3};
 
 export function channelNodeId(name:string){return `channel::${name}`}
-export function endpointNodeId(graph:ValveGraphSnapshot,id:string){return id.startsWith('channel::')?id:graph.nodes.find(node=>node.id===id||node.ports.some(port=>port.id===id))?.id??id}
+const endpointOwners=new WeakMap<ValveGraphSnapshot,Map<string,string>>();
+/** Node owning a node or port id. Cached per snapshot: large missions have ~1000 edges and the scan per lookup dominated. */
+export function endpointNodeId(graph:ValveGraphSnapshot,id:string){
+  if(id.startsWith('channel::'))return id;
+  let owners=endpointOwners.get(graph);
+  if(!owners){
+    owners=new Map();
+    for(const node of graph.nodes){if(!owners.has(node.id))owners.set(node.id,node.id);for(const port of node.ports)if(!owners.has(port.id))owners.set(port.id,node.id)}
+    endpointOwners.set(graph,owners);
+  }
+  return owners.get(id)??id;
+}
+
+/** A `valve` without a target derives it from the link count, so that count is part of what the card says. */
+const bareValve=(node:ValveGraphNode)=>node.kind==='net-condition'&&Array.isArray(node.nativeRecord)&&Array.isArray(node.nativeRecord[1])&&node.nativeRecord[1][2]===undefined;
+export interface NetworkGrouping { graph:ValveGraphSnapshot; members:Map<string,ValveGraphNode[]> }
+/** Display-only: network records of one document whose cards would read the same (kind, native record, derived target, layer, lock) become one card. */
+export function groupNetworkNodes(graph:ValveGraphSnapshot):NetworkGrouping{
+  const key=(node:ValveGraphNode)=>JSON.stringify([node.binding.documentId,node.kind,node.layer,node.locked,node.nativeRecord,bareValve(node)?node.properties.linkCount??null:null]);
+  const buckets=new Map<string,ValveGraphNode[]>();
+  for(const node of graph.nodes)if(node.kind.startsWith('net-')){const id=key(node);buckets.set(id,[...(buckets.get(id)??[]),node])}
+  const members=new Map<string,ValveGraphNode[]>(),remap=new Map<string,string>(),groupOf=new Map<string,string>();
+  for(const [bucket,list] of buckets){
+    if(list.length<2)continue;
+    const groupId=`group::${bucket}`;
+    members.set(groupId,list);
+    for(const node of list){groupOf.set(node.id,groupId);remap.set(node.id,groupId);node.ports.forEach((port,index)=>remap.set(port.id,`${groupId}:port:${index}`))}
+  }
+  if(!members.size)return{graph,members};
+  const nodes:ValveGraphNode[]=[];
+  for(const node of graph.nodes){
+    const groupId=groupOf.get(node.id);
+    if(!groupId){nodes.push(node);continue}
+    const list=members.get(groupId)!;
+    if(list[0]!==node)continue;
+    nodes.push({...node,id:groupId,label:`${node.label} ×${list.length}`,subtitle:`${node.binding.entryName} · ${list.length} records`,ports:node.ports.map((port,index)=>({...port,id:`${groupId}:port:${index}`})),properties:{...node.properties,nodeTags:[],groupSize:list.length}});
+  }
+  const seen=new Set<string>(),edges=[];
+  for(const edge of graph.edges){
+    const from=remap.get(edge.from)??edge.from,to=remap.get(edge.to)??edge.to;
+    if(from===edge.from&&to===edge.to){edges.push(edge);continue}
+    const id=`group-edge::${from}>${to}>${edge.kind??''}>${edge.channel}`;
+    if(seen.has(id))continue;
+    seen.add(id);
+    edges.push({...edge,id,from,to});
+  }
+  return{graph:{...graph,nodes,edges},members};
+}
+export function isGroupNode(node:ValveGraphNode){return typeof node.properties.groupSize==='number'}
 
 function recordValue(node:ValveGraphNode,index:number){return Array.isArray(node.nativeRecord)?node.nativeRecord[index]:undefined}
 function enabled(value:unknown){return value===true||value===1||value==='1'}
